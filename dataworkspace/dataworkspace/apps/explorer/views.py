@@ -2,6 +2,7 @@ import logging
 import re
 from urllib.parse import urlencode
 
+from csp.decorators import csp_exempt
 from psycopg2 import DatabaseError
 
 from django.conf import settings
@@ -681,3 +682,12 @@ class CreateChartView(WaffleFlagMixin, RedirectView):
         )
         run_chart_builder_query.delay(chart.id)
         return f"{chart.get_edit_url()}?prev={self.request.META.get('HTTP_REFERER')}"
+
+
+class DataExplorerV2View(TemplateView):
+    template_name = 'explorer/data_explorer_v2.html'
+
+    @csp_exempt
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
