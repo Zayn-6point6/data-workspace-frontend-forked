@@ -119,6 +119,7 @@ MIDDLEWARE = [
 
 if DEBUG:
     INSTALLED_APPS.append("debug_toolbar")
+    INSTALLED_APPS.append("webpack_loader")
     MIDDLEWARE.append("debug_toolbar.middleware.DebugToolbarMiddleware")
 
 if ELASTIC_APM:
@@ -705,3 +706,12 @@ DATA_WORKSPACE_ROADMAP_URL = env.get("DATA_WORKSPACE_ROADMAP_URL", "")
 CLAMAV_URL = env.get("CLAMAV_URL", "")
 CLAMAV_USER = env.get("CLAMAV_USER", "")
 CLAMAV_PASSWORD = env.get("CLAMAV_PASSWORD", "")
+
+WEBPACK_LOADER = {
+    "DEFAULT": {
+        "CACHE": not DEBUG,
+        "BUNDLE_DIR_NAME": "js/chart-builder/bundles/",
+        "STATS_FILE": "/tmp/stats/webpack-stats.json",
+    }
+}
+

@@ -23,6 +23,7 @@ services:
     volumes:
       - .:/app
       - ./dataworkspace:/dataworkspace
+      - ./dataworkspace/dataworkspace/static/js/data-explorer/stats:/tmp/stats
   data-workspace-celery:
     build:
       context: .
