@@ -734,7 +734,6 @@ DATAFLOW_API_CONFIG = {
 # per user granted, rather than a single field with e.g. comma-separated users.
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
 
-<<<<<<< HEAD
 PROTOCOL = "http://" if LOCAL else "https://"
 SUPERSET_DOMAINS = {
     "view": f"{PROTOCOL}superset.{APPLICATION_ROOT_DOMAIN}",
@@ -762,13 +761,10 @@ WEBPACK_LOADER = {
     }
 }
 
-SUPERSET_VIEW_URL = f'https://superset.{APPLICATION_ROOT_DOMAIN}'
-SUPERSET_EDIT_URL = f'https://superset-edit.{APPLICATION_ROOT_DOMAIN}'
-
 TMP_WEBPACK_LOADER = {
     'DEFAULT': {
         'CACHE': not DEBUG,
         'BUNDLE_DIR_NAME': 'js/data-explorer/bundles/',
-        'STATS_FILE': '/tmp/webpack-stats.json',
+        'STATS_FILE': '/tmp/stats/webpack-stats.json',
     }
 }
