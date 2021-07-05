@@ -189,7 +189,7 @@ def submit_query_for_execution(
         query_id=query_id,
         run_by_user=user,
         connection=query_connection,
-        page=page,
+        page=1 if page is None else page,
         page_size=limit,
     )
 
