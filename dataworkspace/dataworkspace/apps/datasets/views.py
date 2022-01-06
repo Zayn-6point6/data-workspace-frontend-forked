@@ -1640,7 +1640,9 @@ class SourceChangelogView(WaffleFlagMixin, DetailView):
         )
 
 
-class DatasetChartView(View):
+class DatasetChartView(WaffleFlagMixin, View):
+    waffle_flag = settings.CHART_BUILDER_PUBLISH_CHARTS_FLAG
+
     @csp_exempt
     def dispatch(self, *args, **kwargs):
         return super().dispatch(*args, **kwargs)
