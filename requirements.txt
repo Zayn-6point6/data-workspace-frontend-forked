@@ -276,6 +276,7 @@ six==1.15.0
     #   mohawk
     #   packaging
     #   paste
+    #   plotly
     #   psqlparse
     #   python-dateutil
     #   tableschema
@@ -294,7 +295,9 @@ tableschema==1.20.0
 tabulator==1.53.1
     # via tableschema
 tenacity==6.2.0
-    # via celery-redbeat
+    # via
+    #   celery-redbeat
+    #   plotly
 typing-extensions==4.0.0
     # via
     #   aiohttp

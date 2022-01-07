@@ -258,11 +258,8 @@ iniconfig==1.1.1
     # via pytest
 ipdb==0.13.7
     # via -r requirements-dev.in
-<<<<<<< HEAD
 ipython==7.31.1
     # via ipdb
-=======
->>>>>>> WIP: initial react app setup
 ipython-genutils==0.2.0
     # via traitlets
 ipython==7.20.0
@@ -364,6 +361,8 @@ platformdirs==2.4.0
     # via
     #   black
     #   pylint
+plotly==5.5.0
+    # via -r requirements.txt
 pluggy==0.13.1
     # via pytest
 prompt-toolkit==3.0.24
@@ -517,6 +516,7 @@ six==1.15.0
     #   mohawk
     #   packaging
     #   paste
+    #   plotly
     #   psqlparse
     #   python-dateutil
     #   requests-mock
@@ -546,6 +546,7 @@ tenacity==6.2.0
     # via
     #   -r requirements.txt
     #   celery-redbeat
+    #   plotly
 text-unidecode==1.3
     # via faker
 toml==0.10.2
@@ -570,18 +571,12 @@ typing-extensions==4.0.0
     # via
     #   -r requirements.txt
     #   aiohttp
-<<<<<<< HEAD
     #   asgiref
     #   astroid
     #   black
     #   importlib-metadata
     #   pylint
     #   yarl
-=======
-    #   astroid
-    #   black
-    #   pylint
->>>>>>> WIP: initial react app setup
 unicodecsv==0.14.1
     # via
     #   -r requirements.txt
