@@ -722,4 +722,3 @@ WEBPACK_LOADER = {
         "STATS_FILE": "/tmp/stats/webpack-stats.json",
     }
 }
-

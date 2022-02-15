@@ -111,4 +111,3 @@ def chart_link_or_plain_text(text, condition, dataset_uuid, object_id):
         url = reverse("datasets:dataset_chart", args=[dataset_uuid, object_id])
         return mark_safe(f"<a class='govuk-link' href='{url}'>{text}</a>")
     return text
-
