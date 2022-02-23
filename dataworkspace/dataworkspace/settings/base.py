@@ -102,6 +102,7 @@ INSTALLED_APPS = [
     "dynamic_models",
     "dataworkspace.apps.case_studies",
     "csp_helpers",
+    "webpack_loader",
 ]
 
 MIDDLEWARE = [
@@ -120,7 +121,6 @@ MIDDLEWARE = [
 
 if DEBUG:
     INSTALLED_APPS.append("debug_toolbar")
-    INSTALLED_APPS.append("webpack_loader")
     MIDDLEWARE.append("debug_toolbar.middleware.DebugToolbarMiddleware")
 
 if ELASTIC_APM:
@@ -715,10 +715,13 @@ CLAMAV_URL = env.get("CLAMAV_URL", "")
 CLAMAV_USER = env.get("CLAMAV_USER", "")
 CLAMAV_PASSWORD = env.get("CLAMAV_PASSWORD", "")
 
+WEBPACK_STATS_FILE = "chart-builder-stats.json" if not LOCAL else "chart-builder-stats-hot.json"
 WEBPACK_LOADER = {
     "DEFAULT": {
-        "CACHE": not DEBUG,
-        "BUNDLE_DIR_NAME": "js/chart-builder/bundles/",
-        "STATS_FILE": "/tmp/stats/webpack-stats.json",
+        "CACHE": not LOCAL,
+        "BUNDLE_DIR_NAME": "js/bundles",
+        "STATS_FILE": os.path.join(BASE_DIR, "static", "js", "stats", WEBPACK_STATS_FILE),
+        "POLL_INTERVAL": 0.1,
+        "IGNORE": [r".+\.hot-update.js", r".+\.map"],
     }
 }
