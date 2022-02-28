@@ -2,6 +2,7 @@ import React from 'react';
 import Plot from 'react-plotly.js';
 
 import './App.css';
+import '../chart-builder/utils/maps';
 import {getCookie} from "../chart-builder/utils/common";
 import {axisMap} from "../chart-builder/constants";
 
@@ -68,6 +69,7 @@ class App extends React.Component {
            <Plot
               data={this.state.traces}
               layout={this.state.layout}
+              config={{ mapboxAccessToken: '-' }}
               frames={this.state.frames}
               dataSources={this.state.dataSources}
               useResizeHandler

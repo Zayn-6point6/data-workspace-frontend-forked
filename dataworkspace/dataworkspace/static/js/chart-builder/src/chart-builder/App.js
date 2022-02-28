@@ -4,10 +4,12 @@ import plotly from 'plotly.js/dist/plotly';
 import 'react-chart-editor/lib/react-chart-editor.css';
 
 import './App.css';
+import './utils/maps';
 import {availableCharts, axisMap, queryStates} from "./constants";
 import LoadingModal from "./components/LoadingModal";
 import { getCookie } from "./utils/common";
 import ErrorModal from "./components/ErrorModal";
+
 
 DefaultEditor.hasTransforms = () => false;
 
@@ -175,12 +177,16 @@ class App extends React.Component {
               <PlotlyEditor
                 data={this.state.traces}
                 layout={this.state.layout}
-                config={{ editable: true }}
+                config={{ editable: true, mapboxAccessToken: '-' }}
                 frames={this.state.frames}
                 dataSources={this.state.dataSources}
                 dataSourceOptions={this.state.dataSourceOptions}
                 plotly={plotly}
-                onUpdate={(traces, layout, frames) => this.setState({traces, layout, frames})}
+                onUpdate={(traces, layout, frames) => {
+                  console.log('onchange', traces);
+                  this.setState({traces, layout, frames});
+
+                }}
                 useResizeHandler
                 debug
                 advancedTraceTypeSelector

@@ -13,7 +13,7 @@ import logging
 import boto3
 import psycopg2
 from botocore.exceptions import ClientError
-from csp.decorators import csp_exempt, csp_update
+from csp.decorators import csp_update
 
 from psycopg2 import sql
 from django.conf import settings
@@ -1651,8 +1651,7 @@ class DatasetChartView(WaffleFlagMixin, View):
         )
         return dataset.charts.get(id=self.kwargs["object_id"])
 
-    @csp_exempt
-    @csp_update(SCRIPT_SRC="'unsafe-eval'")
+    @csp_update(SCRIPT_SRC=["'unsafe-eval'", "blob:"])
     def get(self, request, **kwargs):
         chart = self.get_object()
         if not chart.dataset.user_has_access(request.user):

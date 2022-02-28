@@ -268,6 +268,13 @@ CSP_STYLE_SRC = [
 ]
 CSP_INCLUDE_NONCE_IN = ["script-src"]
 
+# Allow for connecting to the webpack hotloader for local development
+if LOCAL:
+    CSP_CONNECT_SRC += [
+        f"{APPLICATION_ROOT_DOMAIN.split(':')[0]}:3000",
+        f"ws://{APPLICATION_ROOT_DOMAIN.split(':')[0]}:3000",
+    ]
+
 
 ZENDESK_EMAIL = env["ZENDESK_EMAIL"]
 ZENDESK_SUBDOMAIN = env["ZENDESK_SUBDOMAIN"]
