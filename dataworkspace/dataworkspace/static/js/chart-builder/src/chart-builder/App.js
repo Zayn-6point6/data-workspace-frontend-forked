@@ -10,8 +10,9 @@ import LoadingModal from "./components/LoadingModal";
 import { getCookie } from "./utils/common";
 import ErrorModal from "./components/ErrorModal";
 
-
-DefaultEditor.hasTransforms = () => false;
+// Hide unused parts of the UI
+DefaultEditor.prototype.hasTransforms = () => false;
+DefaultEditor.prototype.hasMaps = () => false;
 
 class App extends React.Component {
   constructor(props) {
@@ -81,7 +82,8 @@ class App extends React.Component {
           });
         }
         this.setState(newState)
-      }).catch(() => {
+      }).catch(e => {
+        console.error(e);
         this.setState({
           loadingData: false,
           queryError: 'An error occurred while running your query'
