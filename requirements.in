@@ -49,3 +49,4 @@ tableschema
 Werkzeug
 XlsxWriter
 zenpy
+django-webpack-loader

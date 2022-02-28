@@ -121,6 +121,8 @@ django-staff-sso-client==2.1.0
     # via -r requirements.in
 django-waffle==2.0.0
     # via -r requirements.in
+django-webpack-loader==1.4.1
+    # via -r requirements.in
 djangorestframework==3.11.2
     # via -r requirements.in
 docopt==0.6.2
