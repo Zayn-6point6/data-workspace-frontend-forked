@@ -20,7 +20,11 @@
                  class="govuk-link govuk-link--no-visited-state chart-preview-container"
                  id="chart-{{ chart.id }}"
               >
-                <img src="{{ chart.chart.thumbnail.url }}" alt="{{ chart.name }}" />
+                {% if not chart.chart.thumbnail %}
+                  <div style="text-align: center">No preview available</div>
+                {% else %}
+                  <img src="{{ chart.chart.thumbnail.url }}" alt="{{ chart.name }}" />
+                {% endif %}
               </a>
             </div>
           {% endif %}
