@@ -184,9 +184,7 @@ class App extends React.Component {
                 dataSourceOptions={this.state.dataSourceOptions}
                 plotly={plotly}
                 onUpdate={(traces, layout, frames) => {
-                  console.log('onchange', traces);
                   this.setState({traces, layout, frames});
-
                 }}
                 useResizeHandler
                 debug
