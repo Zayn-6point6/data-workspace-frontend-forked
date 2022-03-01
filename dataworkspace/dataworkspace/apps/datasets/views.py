@@ -1664,7 +1664,11 @@ class DatasetChartView(WaffleFlagMixin, View):
             },
         )
 
-    def post(self, request, **kwargs):
+
+class DatasetChartDataView(DatasetChartView):
+    waffle_flag = settings.CHART_BUILDER_PUBLISH_CHARTS_FLAG
+
+    def get(self, request, **kwargs):
         dataset_chart = self.get_object()
         if not dataset_chart.dataset.user_has_access(request.user):
             return HttpResponseForbidden()

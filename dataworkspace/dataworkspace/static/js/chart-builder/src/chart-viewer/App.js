@@ -23,13 +23,7 @@ class App extends React.Component {
   }
 
   fetchQueryResults = () => {
-    fetch(`/datasets/${this.props.datasetId}/chart/${this.props.chartId}/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': getCookie('data_workspace_csrf'),
-      },
-    })
+    fetch(`/datasets/${this.props.datasetId}/chart/${this.props.chartId}/data`)
       .then((resp) => resp.json())
       .then((data) => {
         const dataSources = { ...this.state.dataSources, ...data.data };

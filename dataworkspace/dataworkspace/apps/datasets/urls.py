@@ -200,4 +200,10 @@ urlpatterns = [
         {"model_class": models.DataSet},
         name="dataset_chart",
     ),
+    path(
+        "<uuid:dataset_uuid>/chart/<int:object_id>/data",
+        login_required(views.DatasetChartDataView.as_view()),
+        {"model_class": models.DataSet},
+        name="dataset_chart_data",
+    ),
 ]
