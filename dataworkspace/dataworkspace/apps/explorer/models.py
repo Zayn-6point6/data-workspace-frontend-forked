@@ -214,8 +214,11 @@ class ChartBuilderChart(TimeStampedUserModel):
         return data
 
     def get_required_columns(self):
+        traces = self.chart_config.get("traces", [])
+        if len(traces) == 0:
+            return None
         columns = []
-        for trace in self.chart_config.get("traces", []):
+        for trace in traces:
             for column_name in trace["meta"].get("columnNames", {}).values():
                 columns.append(column_name)
             if trace.get("textsrc", None) is not None:
