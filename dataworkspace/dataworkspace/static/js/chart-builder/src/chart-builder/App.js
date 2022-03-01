@@ -7,7 +7,6 @@ import './App.css';
 import './utils/maps';
 import {availableCharts, axisMap, queryStates} from "./constants";
 import LoadingModal from "./components/LoadingModal";
-import { getCookie } from "./utils/common";
 import ErrorModal from "./components/ErrorModal";
 
 // Hide unused parts of the UI
@@ -131,7 +130,7 @@ class App extends React.Component {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-CSRFToken': getCookie('data_workspace_csrf'),
+        'X-CSRFToken': document.getElementsByName('csrfmiddlewaretoken')[0].value,
       },
       body: JSON.stringify({
         config: {

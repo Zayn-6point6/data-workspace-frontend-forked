@@ -11,5 +11,6 @@
       data-back-link="{{ back_link }}"
     ></div>
   </main>
+  {% csrf_token %}
   {% render_bundle_csp "builder" "js" %}
 {% endblock main %}
