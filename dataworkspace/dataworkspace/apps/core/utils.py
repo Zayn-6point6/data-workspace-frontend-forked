@@ -145,7 +145,8 @@ def new_private_database_credentials(
                         """
                     DO $$
                     BEGIN
-                      CREATE ROLE {role};
+                      CREATE ROLE {role}
+                      NOSUPERUSER INHERIT NOCREATEDB NOCREATEROLE NOREPLICATION VALID UNTIL 'infinity';
                     EXCEPTION WHEN OTHERS THEN
                       RAISE DEBUG 'Role {role} already exists';
                     END
