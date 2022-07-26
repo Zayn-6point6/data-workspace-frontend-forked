@@ -25,6 +25,7 @@ from dataworkspace.apps.applications.utils import (
     _do_sync_activity_stream_sso_users,
     long_running_query_alert,
     sync_quicksight_permissions,
+    create_user_from_sso,
 )
 from dataworkspace.apps.datasets.constants import UserAccessType
 from dataworkspace.apps.datasets.models import ToolQueryAuditLog, ToolQueryAuditLogTable
@@ -1139,4 +1140,28 @@ class TestLongRunningQueryAlerts:
         mock_send_slack_message.assert_called_once_with(
             ":rotating_light: Found 1 SQL query running for longer than 15 minutes "
             "on the datasets db."
+        )
+
+
+class TestCreateUser:
+    def test_user_has_existing_profile(self, user):
+        user1 = get_user_model().objects.create(
+            username="johhny.testerman@test.com",
+            is_staff=False,
+            is_superuser=False,
+            email="johhny.testerman@test.com",
+            first_name="Johnny",
+            last_name="Testerman",
+        )
+        user2 = get_user_model().objects.create(
+            username="susan.testeroni@test.com",
+            is_staff=False,
+            is_superuser=False,
+            email="susan.testeroni@test.com",
+            first_name="Susan",
+            last_name="Testeroni",
+        )
+
+        create_user_from_sso(
+            user1.profile.sso_id, user2.email, [user1.email], "Sharon", "Test-Personson", False
         )
