@@ -49,7 +49,7 @@ var LiveSearch = function (formSelector, wrapperSelector, GTM, linkSelector, GOV
 
   this.$form.on(
     "change",
-    "input[type=checkbox], input[type=search], select",
+    "input[type=checkbox], select",
     this.formChange.bind(this)
   );
   this.$form.on("search", "input[type=search]", this.formChange.bind(this));
@@ -329,3 +329,35 @@ function installFilterTextSearch() {
 }
 
 installFilterTextSearch();
+
+// Simple queue to make sure earlier clicks are not processed
+// after later ones, which would cause the state in the browser
+// to not match the server
+var queue = Promise.resolve();
+
+document.body.addEventListener('click', function(event) {
+  var toggle = event.target.closest('.bookmark-toggle');
+  if (!toggle) return;
+
+  var dataset_id = toggle.getAttribute('data-dataset-id');
+  var csrf = document.getElementsByName("csrfmiddlewaretoken")[0].value;
+
+  if (toggle.classList.contains('is-bookmarked')) {
+    var classFunc = 'remove';
+    var path = '/datasets/' + dataset_id + '/unset-bookmark';
+    var title = 'You have not bookmarked this dataset';
+  } else {
+    var classFunc = 'add'
+    var path = '/datasets/' + dataset_id + '/set-bookmark';
+    var title = 'You have bookmarked this dataset';
+  }
+
+  toggle.classList[classFunc]('is-bookmarked');
+  toggle.setAttribute('title', title);
+  queue = queue.finally(() => fetch(
+    path, {
+      method: 'POST',
+      headers: {'Content-Type': 'text/plain;charset=UTF-8"', 'X-CSRFToken': csrf
+    }}
+  ));
+});
