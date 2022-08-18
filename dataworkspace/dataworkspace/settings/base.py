@@ -758,13 +758,12 @@ WEBPACK_LOADER = {
         "STATS_FILE": os.path.join(BASE_DIR, "static", "js", "stats", WEBPACK_STATS_FILE),
         "POLL_INTERVAL": 0.1,
         "IGNORE": [r".+\.hot-update.js", r".+\.map"],
-    }
-}
-
-TMP_WEBPACK_LOADER = {
-    'DEFAULT': {
-        'CACHE': not DEBUG,
-        'BUNDLE_DIR_NAME': 'js/data-explorer/bundles/',
-        'STATS_FILE': '/tmp/stats/webpack-stats.json',
-    }
+    },
+    "EXPLORER": {
+        "CACHE": not DEBUG,
+        "BUNDLE_DIR_NAME": "js/data-explorer/bundles/",
+        "STATS_FILE": os.path.join(
+            BASE_DIR, "static", "js", "data-explorer", "stats", "webpack-stats.json"
+        ),
+    },
 }
