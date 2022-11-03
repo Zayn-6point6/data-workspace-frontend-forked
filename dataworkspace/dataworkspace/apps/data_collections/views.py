@@ -2,13 +2,16 @@ from django.contrib import messages
 from django.http import Http404
 from django.views.generic import DetailView
 from django.views.decorators.http import require_http_methods
+from django.db import transaction
 from django.shortcuts import redirect
-
+from dataworkspace.apps.eventlog.models import EventLog
+from dataworkspace.apps.eventlog.utils import log_event
 from dataworkspace.apps.data_collections.models import (
     Collection,
     CollectionDatasetMembership,
     CollectionVisualisationCatalogueItemMembership,
 )
+from dataworkspace.apps.datasets.models import DataSet
 
 
 def get_authorised_collection(request, collection_id):
@@ -69,5 +72,30 @@ def delete_visualisation_membership(request, collections_id, visualisation_membe
     messages.success(
         request, f"{membership.visualisation.name} has been removed from this collection."
     )
+
+    return redirect("data_collections:collections_view", collections_id=collections_id)
+
+
+@require_http_methods(["POST"])
+def add_dataset_to_collection(request, collections_id, dataset_id):
+    collection = get_authorised_collection(request, collections_id)
+    dataset_object = DataSet.objects.get(id=dataset_id)
+
+    try:
+        CollectionDatasetMembership.objects.get(
+            collection=collection, dataset=dataset_object
+        )
+
+    except CollectionDatasetMembership.DoesNotExist:
+        with transaction.atomic():
+            CollectionDatasetMembership.objects.create(
+                collection=collection, dataset=dataset_object
+            )
+            log_event(
+                request.user,
+                EventLog.TYPE_ADD_DATASET_TO_COLLECTION,
+                related_object=dataset_object,
+            )
+    messages.success(request, f"{dataset_object.name} has been added to this collection.")
 
     return redirect("data_collections:collections_view", collections_id=collections_id)

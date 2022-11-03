@@ -19,4 +19,9 @@ urlpatterns = [
         login_required(views.delete_visualisation_membership),
         name="collection_visualisation_membership",
     ),
+    path(
+        "<uuid:collections_id>/add-dataset-memberships/<uuid:dataset_id>",
+        login_required(views.add_dataset_to_collection),
+        name="add_dataset_collection_data_membership",
+    ),
 ]
