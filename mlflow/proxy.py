@@ -50,6 +50,7 @@ async def async_main():
         "content-length",
         "content-type",
         "authorization",
+        "host",
     )
 
     def get_random_context_logger():
