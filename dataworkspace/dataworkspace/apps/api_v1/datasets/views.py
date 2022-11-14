@@ -17,7 +17,7 @@ from dataworkspace.apps.core.utils import (
     database_dsn,
     StreamingHttpResponseWithoutDjangoDbConnection,
 )
-from dataworkspace.apps.datasets.constants import DataSetType, TagType
+from dataworkspace.apps.datasets.constants import DataSetType, TagType, UserAccessType
 from dataworkspace.apps.datasets.models import (
     SourceTable,
     DataSet,
@@ -352,6 +352,8 @@ class CatalogueItemsInstanceViewSet(viewsets.ModelViewSet):
             .annotate(personal_data=_static_char(None))
             .annotate(retention_policy=_static_char(None))
             .annotate(eligibility_criteria=_static_char(None))
+            .annotate(user_access_type=_static_int(None))
+            .annotate(authorized_email_domains=_static_int(None))
             .annotate(purpose=_static_int(DataSetType.REFERENCE))
             .annotate(
                 source_tags=ArrayAgg(
@@ -362,8 +364,6 @@ class CatalogueItemsInstanceViewSet(viewsets.ModelViewSet):
             )
             .annotate(draft=F("is_draft"))
             .annotate(dictionary=F("published"))
-            .annotate(user_access_type=_static_char(None))
-            .annotate(authorized_email_domains=list)
             .values(*_replace(fields, "id", "uuid"))
         )
         .union(
