@@ -328,6 +328,10 @@ class CatalogueItemsInstanceViewSet(viewsets.ModelViewSet):
         "personal_data",
         "retention_policy",
         "eligibility_criteria",
+        "licence_url",
+        "restrictions_on_usage",
+        "user_access_type",
+        "authorized_email_domains",
     ]
     queryset = (
         DataSet.objects.live()
