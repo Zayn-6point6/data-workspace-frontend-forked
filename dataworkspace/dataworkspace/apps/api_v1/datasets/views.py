@@ -364,7 +364,7 @@ class CatalogueItemsInstanceViewSet(viewsets.ModelViewSet):
             .annotate(dictionary=F("published"))
             .annotate(user_access_type=_static_char(None))
             .annotate(authorized_email_domains=list)
-            .values(*_replace(fields[:-2], "id", "uuid"))
+            .values(*_replace(fields, "id", "uuid"))
         )
         .union(
             VisualisationCatalogueItem.objects.live()
