@@ -362,7 +362,9 @@ class CatalogueItemsInstanceViewSet(viewsets.ModelViewSet):
             )
             .annotate(draft=F("is_draft"))
             .annotate(dictionary=F("published"))
-            .values(*_replace(fields, "id", "uuid"))
+            .annotate(user_access_type=_static_char(None))
+            .annotate(authorized_email_domains=list)
+            .values(*_replace(fields[:-2], "id", "uuid"))
         )
         .union(
             VisualisationCatalogueItem.objects.live()
