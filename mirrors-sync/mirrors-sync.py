@@ -755,6 +755,9 @@ async def conda_mirror(logger, request, s3_context, source_base_url, s3_prefix):
         for package_suffix, _ in source_repodata["packages"].items():
             await queue.put(arch_dir + package_suffix)
 
+        for package_suffix, _ in source_repodata("packages.conda", {}).items():
+            await queue.put(arch_dir + package_suffix)
+
         repodatas.append((arch_dir + "repodata.json", source_repodata_raw))
 
         code, _, body = await request(b"GET", source_base_url + arch_dir + "repodata.json.bz2")
