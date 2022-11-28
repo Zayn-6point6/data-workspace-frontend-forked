@@ -1,3 +1,5 @@
+import re
+
 from django.contrib.auth import get_user_model
 
 from django.contrib.postgres.forms import SplitArrayField, SplitArrayWidget
@@ -57,6 +59,11 @@ class VisualisationsUICatalogueItemForm(GOVUKDesignSystemModelForm):
         label="Short description",
         widget=GOVUKDesignSystemTextWidget(label_is_heading=False),
         error_messages={"required": "The visualisation must have a summary"},
+    )
+    description = GOVUKDesignSystemCharField(
+        label="Description (optional)",
+        required=False,
+        widget=GOVUKDesignSystemTextareaWidget(label_is_heading=False),
     )
 
     enquiries_contact = GOVUKDesignSystemEmailValidationModelChoiceField(
@@ -165,7 +172,6 @@ class VisualisationsUICatalogueItemForm(GOVUKDesignSystemModelForm):
             "eligibility_criteria",
         ]
         widgets = {"retention_policy": Textarea, "restrictions_on_usage": Textarea}
-        labels = {"description": "Description"}
 
     def __init__(self, *args, **kwargs):
         kwargs["initial"] = kwargs.get("initial", {})
@@ -182,6 +188,10 @@ class VisualisationsUICatalogueItemForm(GOVUKDesignSystemModelForm):
         for field in self._email_fields:
             if getattr(self.instance, field):
                 self.initial[field] = getattr(self.instance, field).email
+
+    def clean_description(self):
+        # Do not allow newlines in the description
+        return re.sub(r"[\r\n]+", " ", self.cleaned_data["description"])
 
 
 class VisualisationApprovalForm(GOVUKDesignSystemModelForm):
