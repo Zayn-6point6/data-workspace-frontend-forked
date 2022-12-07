@@ -27,7 +27,7 @@ from dataworkspace.apps.data_collections.models import (
 )
 
 from dataworkspace.apps.datasets.constants import DataSetType, TagType
-from dataworkspace.apps.datasets.models import Tag
+from dataworkspace.apps.datasets.models import Tag, DataSet
 from dataworkspace.apps.eventlog.models import EventLog
 from dataworkspace.apps.eventlog.utils import log_event
 from dataworkspace.notify import EmailSendFailureException, send_email
@@ -206,6 +206,12 @@ def select_collection_for_membership(
             user_collections=user_collections,
         )
         if form.is_valid():
+            if form.cleaned_data["collection"] == "add_to_new_collection":
+                if membership_model_relationship_name == "dataset":
+                    return redirect("data_collections:collection-create-with-selected-dataset", dataset_id=dataset.id)
+                elif membership_model_relationship_name == "visualisation":
+                    return redirect("data_collections:collection-create-with-selected-visualisation", dataset_id=dataset.id)
+
             try:
                 with transaction.atomic():
                     membership_model_class.objects.create(
@@ -398,6 +404,21 @@ class CollectionCreateView(CreateView):
             EventLog.TYPE_CREATED_COLLECTION,
             related_object=form.instance,
         )
+
+        if self.kwargs["dataset_id"]:
+            dataset = get_object_or_404(self.kwargs["dataset_class"].objects.live().filter(published=True), pk=self.kwargs["dataset_id"])
+            form.instance.owner = self.request.user
+            form.instance.created_by = self.request.user
+            form.save(commit=False)
+            super().form_valid(form)
+
+            with transaction.atomic():
+                self.kwargs["membership_model_class"].objects.create(
+                    collection=form.instance,
+                    created_by=self.request.user,
+                    **{self.kwargs["membership_model_relationship_name"]: dataset},
+                )
+
         return super().form_valid(form)
 
 
