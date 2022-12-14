@@ -15,7 +15,9 @@ from dataworkspace.apps.request_access.forms import (  # pylint: disable=import-
     ToolsAccessRequestFormPart1,
     ToolsAccessRequestFormPart2,
     ToolsAccessRequestFormPart3,
+    CollectionAccessRequestForm
 )
+from dataworkspace.apps.data_collections.views import get_authorised_collection
 
 from dataworkspace.apps.request_access import models
 from dataworkspace import zendesk
@@ -225,4 +227,22 @@ class AccessRequestConfirmationPage(RequestAccessMixin, DetailView):
             if self.object.catalogue_item_id
             else None
         )
+        return context
+
+
+class CollectionAccessRequest(CreateView):
+    model = models.AccessRequest
+    template_name = "request_access/collection.html"
+    form_class = CollectionAccessRequestForm
+
+    def get_object(self, queryset=None):
+        return get_authorised_collection(self.request, self.kwargs["collections_id"])
+        
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        source_object = self.get_object()
+        context["source_object"] = source_object
+        context["contact_email"] = self.request.user.email
+
         return context
