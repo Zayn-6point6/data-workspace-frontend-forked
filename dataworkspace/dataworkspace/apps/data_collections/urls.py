@@ -7,6 +7,7 @@ from dataworkspace.apps.data_collections.models import (
     CollectionVisualisationCatalogueItemMembership,
 )
 from dataworkspace.apps.datasets.models import DataSet, VisualisationCatalogueItem
+from dataworkspace.apps.request_access.views import CollectionAccessRequest
 
 urlpatterns = [
     path(
@@ -114,5 +115,10 @@ urlpatterns = [
         "<uuid:collections_id>/history",
         login_required(views.history_of_collection_changes),
         name="history-of-collection-changes",
+    ),
+    path(
+        "<uuid:collections_id>/request-access",
+        login_required(CollectionAccessRequest.as_view()),
+        name="request-access",
     ),
 ]
