@@ -235,6 +235,9 @@ class CollectionAccessRequest(CreateView):
     template_name = "request_access/collection.html"
     form_class = CollectionAccessRequestForm
 
+    def get_initial(self):
+        return {"contact_email": self.request.user.email}
+
     def get_object(self, queryset=None):
         return get_authorised_collection(self.request, self.kwargs["collections_id"])
         
