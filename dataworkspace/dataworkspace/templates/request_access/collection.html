@@ -1,0 +1,35 @@
+{% extends '_main.html' %}
+
+{% block page_title %}Request access to collection {{ block.super }}{% endblock %}
+
+{% block breadcrumbs %}
+  <div class="govuk-breadcrumbs">
+    <ol class="govuk-breadcrumbs__list">
+      <li class="govuk-breadcrumbs__list-item">
+        <a class="govuk-breadcrumbs__link" href="/">Back</a>
+      </li>
+    </ol>
+  </div>
+{% endblock %}
+
+{% block content %}
+<div class="govuk-width-container">
+        <h1 class="govuk-heading-xl" style="margin-bottom: 20px">Request access to collection</h1>
+        <span class="govuk-caption-xl">
+          You need to fill in this screen to request access to a collection
+        </span>
+        <p class="govuk-label govuk-!-font-weight-bold">Collection Name</p>
+        <p class="govuk-body">{{ source_object }}</p>
+        <p class="govuk-label govuk-!-font-weight-bold">Collection Owner</p>
+        <p class="govuk-body">{{ source_object.owner.get_full_name}}</p>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+        <fieldset class="govuk-fieldset">
+          {{ form.id }}
+          {{ form.contact_email }}
+          <button type="submit" class="govuk-button" data-prevent-double-click="true">Continue</button>
+        </fieldset>
+      </form>
+</div>
+{% endblock %}

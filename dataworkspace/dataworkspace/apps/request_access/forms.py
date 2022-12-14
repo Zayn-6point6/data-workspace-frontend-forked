@@ -111,3 +111,29 @@ class ToolsAccessRequestFormPart3(GOVUKDesignSystemModelForm):
         ),
         error_messages={"required": "Enter a reason for needing SPSS and STATA."},
     )
+
+
+class CollectionAccessRequestForm(GOVUKDesignSystemModelForm):
+    class Meta:
+        model = AccessRequest
+        fields = ["id", "contact_email"]
+
+    id = forms.IntegerField(widget=forms.HiddenInput, required=False)
+    contact_email = GOVUKDesignSystemCharField(
+        label="Contact email",
+        widget=GOVUKDesignSystemTextWidget(
+            label_is_heading=False, extra_label_classes="govuk-!-font-weight-bold"
+        ),
+        error_messages={"required": "You must provide your contact email address."},
+    )
+
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        initial_email = self.initial.get("contact_email")
+        if initial_email:
+            self.fields["contact_email"].help_text = f"You are logged in as {initial_email}"
+            self.fields["contact_email"].widget.custom_context[
+                "help_text"
+            ] = f"You are logged in as {initial_email}"
