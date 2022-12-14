@@ -127,7 +127,6 @@ class CollectionAccessRequestForm(GOVUKDesignSystemModelForm):
         error_messages={"required": "You must provide your contact email address."},
     )
 
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

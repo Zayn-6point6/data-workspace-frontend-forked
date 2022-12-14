@@ -15,7 +15,7 @@ from dataworkspace.apps.request_access.forms import (  # pylint: disable=import-
     ToolsAccessRequestFormPart1,
     ToolsAccessRequestFormPart2,
     ToolsAccessRequestFormPart3,
-    CollectionAccessRequestForm
+    CollectionAccessRequestForm,
 )
 from dataworkspace.apps.data_collections.views import get_authorised_collection
 
@@ -240,7 +240,6 @@ class CollectionAccessRequest(CreateView):
 
     def get_object(self, queryset=None):
         return get_authorised_collection(self.request, self.kwargs["collections_id"])
-        
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
