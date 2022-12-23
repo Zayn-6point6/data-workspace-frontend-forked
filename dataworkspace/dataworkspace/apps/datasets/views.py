@@ -1542,7 +1542,7 @@ class UserSearchFormView(EditBaseView, FormView):
                 #             non_email_matches.append(query)
                 # else:
                 #     if not users:
-                #         non_email_matches.append(search_query)    
+                #         non_email_matches.append(search_query)
             self.plus_context["results"] = users
             self.plus_context["query"] = search_query
             self.plus_context["non_matches"] = non_email_matches

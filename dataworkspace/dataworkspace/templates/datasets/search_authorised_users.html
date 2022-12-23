@@ -47,6 +47,7 @@
                   <button type="submit" class="govuk-button" data-prevent-double-click="true" >Search</button>
               </fieldset>
           </form>
+            {% if waffle_flag %} 
             {% if non_matches %}
             <table class="govuk-table">
               <caption class="govuk-table__caption govuk-table__caption--m">The following email addresses did not match real users:</caption>
@@ -65,6 +66,7 @@
                   </tbody>
                   </table>
             {% endif %} 
+            {% endif %}
             {% if search_results %}
                 <table class="govuk-table">
                     <caption class="govuk-table__caption govuk-table__caption--m">Found {{ search_results.count }} result{% if search_results.count > 1 %}s{% else %} for {{ search_query }}{% endif %}</caption>
