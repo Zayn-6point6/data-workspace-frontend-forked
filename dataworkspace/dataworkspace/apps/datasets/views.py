@@ -1516,15 +1516,36 @@ class UserSearchFormView(EditBaseView, FormView):
         search_query = self.request.POST["search"]
         if waffle.flag_is_active(self.request, "ALLOW_USER_ACCESS_TO_DASHBOARD_IN_BULK"):
             if search_query:
+                non_email_matches = []
                 if "\n" in search_query:
                     email_filter = Q(email__icontains=search_query.splitlines()[0])
                     for query in search_query.splitlines()[1:]:
                         email_filter = email_filter | (Q(email__icontains=query))
+                    users = get_user_model().objects.filter(Q(email_filter))
+
+                    for query in search_query.splitlines()[0:]:
+                        if users.filter(Q(email__icontains=query)):
+                            continue
+                        else:
+                            non_email_matches.append(query)
                 else:
                     email_filter = Q(email__icontains=search_query)
-                users = get_user_model().objects.filter(Q(email_filter))
-                self.plus_context["results"] = users
-                self.plus_context["query"] = search_query
+                    users = get_user_model().objects.filter(Q(email_filter))
+                    if not users:
+                        non_email_matches.append(search_query)
+
+                # users = get_user_model().objects.filter(Q(email_filter))
+
+                # if "\n" in search_query:
+                #     for query in search_query.splitlines()[1:]:
+                #         if query or search_query not in users:
+                #             non_email_matches.append(query)
+                # else:
+                #     if not users:
+                #         non_email_matches.append(search_query)    
+            self.plus_context["results"] = users
+            self.plus_context["query"] = search_query
+            self.plus_context["non_matches"] = non_email_matches
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
@@ -1533,6 +1554,7 @@ class UserSearchFormView(EditBaseView, FormView):
             if self.plus_context:
                 context["search_results"] = self.plus_context["results"]
                 context["search_query"] = self.plus_context["query"]
+                context["non_matches"] = self.plus_context["non_matches"]
                 self.plus_context.clear()
         else:
             search_query = self.request.GET.get("search_query")

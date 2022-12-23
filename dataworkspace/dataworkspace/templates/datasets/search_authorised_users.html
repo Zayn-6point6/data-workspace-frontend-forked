@@ -47,6 +47,24 @@
                   <button type="submit" class="govuk-button" data-prevent-double-click="true" >Search</button>
               </fieldset>
           </form>
+            {% if non_matches %}
+            <table class="govuk-table">
+              <caption class="govuk-table__caption govuk-table__caption--m">The following email addresses did not match real users:</caption>
+              <tbody class="govuk-table__body">
+              {% if non_matches|length > 1%} 
+              {% for non_match in non_matches %}
+                  <tr class="govuk-table__row">
+                      <td class="govuk-table__cell">{{ non_match }}</td>
+                    </tr>
+              {% endfor %}
+              {% else %}
+                  <tr class="govuk-table__row">
+                    <td class="govuk-table__cell">{{ non_matches }}</td>
+                  </tr>
+              {% endif %} 
+                  </tbody>
+                  </table>
+            {% endif %} 
             {% if search_results %}
                 <table class="govuk-table">
                     <caption class="govuk-table__caption govuk-table__caption--m">Found {{ search_results.count }} result{% if search_results.count > 1 %}s{% else %} for {{ search_query }}{% endif %}</caption>
@@ -60,10 +78,6 @@
                         {% endfor %}
                     </tbody>
                   </table>
-            {% else %}
-              {% if search_query %}
-                <h2 class="govuk-heading-m">Found 0 results</h2>
-              {% endif %}
             {% endif %}
         </div>
     </div>
