@@ -1675,7 +1675,7 @@ class DatasetAuthorisedUsersSearchView(UserSearchFormView):
         return context
 
     def get_success_url(self):
-        if waffle.flag_is_active(self, "ALLOW_USER_ACCESS_TO_DASHBOARD_IN_BULK"):
+        if waffle.flag_is_active(self.request, "ALLOW_USER_ACCESS_TO_DASHBOARD_IN_BULK"):
             return reverse(
                 "datasets:search_authorized_users",
                 args=[self.obj.pk, self.kwargs.get("summary_id")],
