@@ -319,6 +319,7 @@ def application_instance_max_cpu(application_instance):
 
     return max_cpu, ts_at_max
 
+
 def spawn_visualisation(public_host):
     try:
         application_instance = get_api_visible_application_instance_by_public_host(public_host)
@@ -344,7 +345,7 @@ def spawn_visualisation(public_host):
 
     try:
         application_instance = ApplicationInstance.objects.create(
-            owner=request.user,
+            # owner=request.user,
             application_template=application_template,
             spawner=application_template.spawner,
             spawner_application_template_options=spawner_options,
@@ -361,7 +362,7 @@ def spawn_visualisation(public_host):
     else:
         spawn.delay(
             application_template.spawner,
-            request.user.pk,
+            # request.user.pk,
             tag,
             application_instance.id,
             spawner_options,
@@ -382,18 +383,22 @@ def kill_idle_fargate():
         created_date__lt=two_hours_ago,
     )
 
-    #Does this list need to be filtered for custom visualisations? Are there other types we don't wnt to cover?
+    # Does this list need to be filtered for custom visualisations? Are there other types we don't wnt to cover?
     visualisations = VisualisationCatalogueItem.objects.all()
     instances_visualisations = []
     for instance in instances:
-        if VisualisationCatalogueItem.objects.filter(visualisation_template=instance.application_template):
+        if VisualisationCatalogueItem.objects.filter(
+            visualisation_template=instance.application_template
+        ):
             instances_visualisations.append(instance)
     instances_visualisations_ids = set(instances_visualisations.ids)
     for visualisation in visualisations:
-        if visualisation.id not in instances_visualisations_ids:
-            vis = VisualisationCatalogueItem.objects.get(pk=visualisation.id)
-            public_host = vis.visualisation_template.host_basename
-            spawn_visualisation(public_host)
+        if datetime.time(18, 0, 0) > datetime.datetime.now().time() > datetime.time(8, 30, 0):
+            if visualisation.id not in instances_visualisations_ids:
+                vis = VisualisationCatalogueItem.objects.get(pk=visualisation.id)
+                public_host = vis.visualisation_template.host_basename
+                spawn_visualisation(public_host)
+
     # for visualisation in visualisations:
     #     for instance in instances:
     #         if visualisation.visualisation_template != instance.application_template
@@ -403,7 +408,6 @@ def kill_idle_fargate():
     #                 break
     #             else:
     #                 continue
-        
 
     for instance in instances:
         if instance.state == "SPAWNING":
