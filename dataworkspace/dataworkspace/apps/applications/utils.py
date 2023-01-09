@@ -374,7 +374,7 @@ def spawn_visualisation(public_host):
 @celery_app.task()
 @close_all_connections_if_not_in_atomic_block
 def start_stop_fargate():
-    logger.info("kill_idle_fargate: Start")
+    logger.info("stop_start_fargate: Start")
 
     two_hours_ago = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=-2)
     all_instances = ApplicationInstance.objects.filter(
@@ -398,7 +398,7 @@ def start_stop_fargate():
             vis = VisualisationCatalogueItem.objects.get(pk=visualisation.id)
             public_host = vis.visualisation_template.host_basename
             spawn_visualisation(public_host)
-            logger.info("kill_idle_fargate: Spawning instance of %s visualisation", instance)
+            logger.info("stop_start_fargate: Spawning instance of %s visualisation", instance)
 
     def kill_fargate(instances)
         for instance in instances:
@@ -406,17 +406,17 @@ def start_stop_fargate():
                 stop_spawner_and_application(instance)
                 continue
 
-            logger.info("kill_idle_fargate: Attempting to find CPU usage of %s", instance)
+            logger.info("stop_start_fargate: Attempting to find CPU usage of %s", instance)
             try:
                 max_cpu, _ = application_instance_max_cpu(instance)
             except ExpectedMetricsException:
-                logger.info("kill_idle_fargate: Unable to find CPU usage for %s", instance)
+                logger.info("stop_start_fargate: Unable to find CPU usage for %s", instance)
                 continue
             except Exception:  # pylint: disable=broad-except
-                logger.exception("kill_idle_fargate: Unable to find CPU usage for %s", instance)
+                logger.exception("stop_start_fargate: Unable to find CPU usage for %s", instance)
                 continue
 
-            logger.info("kill_idle_fargate: CPU usage for %s is %s", instance, max_cpu)
+            logger.info("stop_start_fargate: CPU usage for %s is %s", instance, max_cpu)
 
             if max_cpu >= 1.0:
                 continue
@@ -424,9 +424,9 @@ def start_stop_fargate():
             try:
                 stop_spawner_and_application(instance)
             except Exception:  # pylint: disable=broad-except
-                logger.exception("kill_idle_fargate: Unable to stop %s", instance)
+                logger.exception("stop_start_fargate: Unable to stop %s", instance)
 
-            logger.info("kill_idle_fargate: Stopped application %s", instance)
+            logger.info("stop_start_fargate: Stopped application %s", instance)
     kill_fargate(tool_instances)
 
     if current_time > datetime.time(18, 0, 0):
@@ -434,7 +434,7 @@ def start_stop_fargate():
         
     
 
-    logger.info("kill_idle_fargate: End")
+    logger.info("stop_start_fargate: End")
 
 
 @celery_app.task()
