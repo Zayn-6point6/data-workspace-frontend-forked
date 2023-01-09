@@ -384,8 +384,10 @@ def start_stop_fargate():
     tool_instances = all_instances.filter(
         application_template__application_type="TOOL",
         created_date__lt=two_hours_ago,
-        )
-    visualisation_instances = all_instances.filter(application_template__application_type="VISUALISATION")
+    )
+    visualisation_instances = all_instances.filter(
+        application_template__application_type="VISUALISATION"
+    )
 
     # Get all visualisations
     visualisations = VisualisationCatalogueItem.objects.all()
@@ -393,7 +395,10 @@ def start_stop_fargate():
     current_time = current_day.time()
     for visualisation in visualisations:
         # If the time is between half 8am and 6pm on weekday
-        if datetime.time(18, 0, 0) > current_time > datetime.time(8, 30, 0) and current_day.weekday() < 5:
+        if (
+            datetime.time(18, 0, 0) > current_time > datetime.time(8, 30, 0)
+            and current_day.weekday() < 5
+        ):
             # Get the visualisation and public host, then spawn a vis
             vis = VisualisationCatalogueItem.objects.get(pk=visualisation.id)
             public_host = vis.visualisation_template.host_basename
@@ -427,12 +432,11 @@ def start_stop_fargate():
                 logger.exception("stop_start_fargate: Unable to stop %s", instance)
 
             logger.info("stop_start_fargate: Stopped application %s", instance)
+
     kill_fargate(tool_instances)
 
     if current_time > datetime.time(18, 0, 0):
         kill_fargate(visualisation_instances)
-        
-    
 
     logger.info("stop_start_fargate: End")
 
