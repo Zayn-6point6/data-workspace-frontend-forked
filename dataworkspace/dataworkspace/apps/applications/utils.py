@@ -396,9 +396,11 @@ def kill_idle_fargate():
     #         instances_visualisations.append(instance)
     # Create a set of the ids for each matching visualisation
     # instances_visualisations_ids = set(instances_visualisations.id)
+    current_time = datetime.time.now()
+    current_day = datetime.datetime.now()
     for visualisation in visualisations:
-        # If the time is between half 8am and 6pm
-        if datetime.time(18, 0, 0) > datetime.datetime.now().time() > datetime.time(8, 30, 0):
+        # If the time is between half 8am and 6pm on weekday
+        if datetime.time(18, 0, 0) > current_time > datetime.time(8, 30, 0) and current_day.weekday() < 5:
             # And the id of the vis is not the id of a current instance
             # if visualisation.id not in instances_visualisations_ids:
             # Get the visualisation and public host, then spawn a vis
