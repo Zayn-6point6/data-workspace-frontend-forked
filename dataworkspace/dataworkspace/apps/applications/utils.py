@@ -373,17 +373,18 @@ def spawn_visualisation(public_host):
 
 @celery_app.task()
 @close_all_connections_if_not_in_atomic_block
-def kill_idle_fargate():
+def start_stop_fargate():
     logger.info("kill_idle_fargate: Start")
 
     two_hours_ago = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=-2)
     all_instances = ApplicationInstance.objects.filter(
         spawner="FARGATE",
         state__in=["RUNNING", "SPAWNING"],
-        created_date__lt=two_hours_ago,
-        application_template__application_type="TOOL"
     )
-    tool_instances = all_instances.filter(application_template__application_type="TOOL")
+    tool_instances = all_instances.filter(
+        application_template__application_type="TOOL",
+        created_date__lt=two_hours_ago,
+        )
     visualisation_instances = all_instances.filter(application_template__application_type="VISUALISATION")
 
     # Get all visualisations
@@ -427,7 +428,7 @@ def kill_idle_fargate():
 
             logger.info("kill_idle_fargate: Stopped application %s", instance)
     kill_fargate(tool_instances)
-    
+
     if current_time > datetime.time(18, 0, 0):
         kill_fargate(visualisation_instances)
         
