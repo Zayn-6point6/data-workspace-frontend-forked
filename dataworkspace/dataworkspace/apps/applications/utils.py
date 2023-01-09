@@ -387,24 +387,24 @@ def kill_idle_fargate():
     # Get all visualisations
     visualisations = VisualisationCatalogueItem.objects.all()
     # Instantiate list to store vis instances
-    instances_visualisations = []
-    for instance in instances:
-        # If visualisation's template is the same as the instance's, add instance to list of matching visualisations
-        if VisualisationCatalogueItem.objects.filter(
-            visualisation_template=instance.application_template
-        ):
-            instances_visualisations.append(instance)
+    # instances_visualisations = []
+    # for instance in instances:
+    #     # If visualisation's template is the same as the instance's, add instance to list of matching visualisations
+    #     if VisualisationCatalogueItem.objects.filter(
+    #         visualisation_template=instance.application_template
+    #     ):
+    #         instances_visualisations.append(instance)
     # Create a set of the ids for each matching visualisation
-    instances_visualisations_ids = set(instances_visualisations.ids)
+    # instances_visualisations_ids = set(instances_visualisations.id)
     for visualisation in visualisations:
         # If the time is between half 8am and 6pm
         if datetime.time(18, 0, 0) > datetime.datetime.now().time() > datetime.time(8, 30, 0):
             # And the id of the vis is not the id of a current instance
-            if visualisation.id not in instances_visualisations_ids:
-                # Get the visualisation and public host, then spawn a vis
-                vis = VisualisationCatalogueItem.objects.get(pk=visualisation.id)
-                public_host = vis.visualisation_template.host_basename
-                spawn_visualisation(public_host)
+            # if visualisation.id not in instances_visualisations_ids:
+            # Get the visualisation and public host, then spawn a vis
+            vis = VisualisationCatalogueItem.objects.get(pk=visualisation.id)
+            public_host = vis.visualisation_template.host_basename
+            spawn_visualisation(public_host)
 
     # for visualisation in visualisations:
     #     for instance in instances:
