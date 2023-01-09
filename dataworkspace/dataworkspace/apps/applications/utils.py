@@ -398,7 +398,7 @@ def start_stop_fargate():
             vis = VisualisationCatalogueItem.objects.get(pk=visualisation.id)
             public_host = vis.visualisation_template.host_basename
             spawn_visualisation(public_host)
-            logger.info("stop_start_fargate: Spawning instance of %s visualisation", instance)
+            logger.info("stop_start_fargate: Spawning instance of %s visualisation", visualisation)
 
     def kill_fargate(instances):
         for instance in instances:
