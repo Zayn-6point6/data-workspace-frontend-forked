@@ -406,42 +406,33 @@ def kill_idle_fargate():
             public_host = vis.visualisation_template.host_basename
             spawn_visualisation(public_host)
 
-    # for visualisation in visualisations:
-    #     for instance in instances:
-    #         if visualisation.visualisation_template != instance.application_template
-    #             if datetime.time(18,0,0) > datetime.datetime.now().time(timezone.utc) > datetime.time(9,0,0):
-    #                 #Need to work out how instance are usually spawned, something to do with proxy.py
-    #                 #spawn an instance
-    #                 break
-    #             else:
-    #                 continue
-
     for instance in instances:
-        if instance.state == "SPAWNING":
-            stop_spawner_and_application(instance)
-            continue
+        if datetime.time.now() > datetime.time(18, 0, 0):
+            if instance.state == "SPAWNING":
+                stop_spawner_and_application(instance)
+                continue
 
-        logger.info("kill_idle_fargate: Attempting to find CPU usage of %s", instance)
-        try:
-            max_cpu, _ = application_instance_max_cpu(instance)
-        except ExpectedMetricsException:
-            logger.info("kill_idle_fargate: Unable to find CPU usage for %s", instance)
-            continue
-        except Exception:  # pylint: disable=broad-except
-            logger.exception("kill_idle_fargate: Unable to find CPU usage for %s", instance)
-            continue
+            logger.info("kill_idle_fargate: Attempting to find CPU usage of %s", instance)
+            try:
+                max_cpu, _ = application_instance_max_cpu(instance)
+            except ExpectedMetricsException:
+                logger.info("kill_idle_fargate: Unable to find CPU usage for %s", instance)
+                continue
+            except Exception:  # pylint: disable=broad-except
+                logger.exception("kill_idle_fargate: Unable to find CPU usage for %s", instance)
+                continue
 
-        logger.info("kill_idle_fargate: CPU usage for %s is %s", instance, max_cpu)
+            logger.info("kill_idle_fargate: CPU usage for %s is %s", instance, max_cpu)
 
-        if max_cpu >= 1.0:
-            continue
+            if max_cpu >= 1.0:
+                continue
 
-        try:
-            stop_spawner_and_application(instance)
-        except Exception:  # pylint: disable=broad-except
-            logger.exception("kill_idle_fargate: Unable to stop %s", instance)
+            try:
+                stop_spawner_and_application(instance)
+            except Exception:  # pylint: disable=broad-except
+                logger.exception("kill_idle_fargate: Unable to stop %s", instance)
 
-        logger.info("kill_idle_fargate: Stopped application %s", instance)
+            logger.info("kill_idle_fargate: Stopped application %s", instance)
 
     logger.info("kill_idle_fargate: End")
 
