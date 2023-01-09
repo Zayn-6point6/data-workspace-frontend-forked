@@ -18,6 +18,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
 from django.db import DatabaseError, IntegrityError, connections, transaction
 from django.db.models import Q
+from django.http import JsonResponse
 import gevent
 from psycopg2 import connect, sql
 import requests
@@ -57,6 +58,7 @@ from dataworkspace.apps.datasets.models import (
     ToolQueryAuditLog,
     VisualisationCatalogueItem,
 )
+from dataworkspace.apps.applications.spawner import spawn
 from dataworkspace.cel import celery_app
 
 logger = logging.getLogger("app")
@@ -317,6 +319,56 @@ def application_instance_max_cpu(application_instance):
 
     return max_cpu, ts_at_max
 
+def spawn_visualisation(public_host):
+    try:
+        application_instance = get_api_visible_application_instance_by_public_host(public_host)
+    except ApplicationInstance.DoesNotExist:
+        pass
+    else:
+        return JsonResponse({"message": "Application instance already exists"}, status=409)
+
+    try:
+        (
+            application_template,
+            tag,
+            _,
+            commit_id,
+        ) = application_template_tag_user_commit_from_host(public_host)
+    except ApplicationTemplate.DoesNotExist:
+        return JsonResponse({"message": "Application template does not exist"}, status=400)
+
+    cpu = application_template.default_cpu
+    memory = application_template.default_memory
+
+    spawner_options = json.dumps(application_options(application_template))
+
+    try:
+        application_instance = ApplicationInstance.objects.create(
+            owner=request.user,
+            application_template=application_template,
+            spawner=application_template.spawner,
+            spawner_application_template_options=spawner_options,
+            spawner_application_instance_id=json.dumps({}),
+            public_host=public_host,
+            state="SPAWNING",
+            single_running_or_spawning_integrity=public_host,
+            cpu=cpu,
+            memory=memory,
+            commit_id=commit_id,
+        )
+    except IntegrityError:
+        application_instance = get_api_visible_application_instance_by_public_host(public_host)
+    else:
+        spawn.delay(
+            application_template.spawner,
+            request.user.pk,
+            tag,
+            application_instance.id,
+            spawner_options,
+        )
+
+    return JsonResponse(api_application_dict(application_instance), status=200)
+
 
 @celery_app.task()
 @close_all_connections_if_not_in_atomic_block
@@ -329,6 +381,29 @@ def kill_idle_fargate():
         state__in=["RUNNING", "SPAWNING"],
         created_date__lt=two_hours_ago,
     )
+
+    #Does this list need to be filtered for custom visualisations? Are there other types we don't wnt to cover?
+    visualisations = VisualisationCatalogueItem.objects.all()
+    instances_visualisations = []
+    for instance in instances:
+        if VisualisationCatalogueItem.objects.filter(visualisation_template=instance.application_template):
+            instances_visualisations.append(instance)
+    instances_visualisations_ids = set(instances_visualisations.ids)
+    for visualisation in visualisations:
+        if visualisation.id not in instances_visualisations_ids:
+            vis = VisualisationCatalogueItem.objects.get(pk=visualisation.id)
+            public_host = vis.visualisation_template.host_basename
+            spawn_visualisation(public_host)
+    # for visualisation in visualisations:
+    #     for instance in instances:
+    #         if visualisation.visualisation_template != instance.application_template
+    #             if datetime.time(18,0,0) > datetime.datetime.now().time(timezone.utc) > datetime.time(9,0,0):
+    #                 #Need to work out how instance are usually spawned, something to do with proxy.py
+    #                 #spawn an instance
+    #                 break
+    #             else:
+    #                 continue
+        
 
     for instance in instances:
         if instance.state == "SPAWNING":
