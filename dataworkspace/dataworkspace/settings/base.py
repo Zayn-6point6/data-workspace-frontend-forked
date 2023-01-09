@@ -318,7 +318,7 @@ CELERY_ROUTES = {
 if not strtobool(env.get("DISABLE_CELERY_BEAT_SCHEDULE", "0")):
     CELERY_BEAT_SCHEDULE = {
         "kill-idle-fargate-containers": {
-            "task": "dataworkspace.apps.applications.utils.kill_idle_fargate",
+            "task": "dataworkspace.apps.applications.utils.start_stop_fargate",
             "schedule": 60 * 10,
             "args": (),
         },
