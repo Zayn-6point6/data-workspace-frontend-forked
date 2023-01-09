@@ -377,39 +377,30 @@ def kill_idle_fargate():
     logger.info("kill_idle_fargate: Start")
 
     two_hours_ago = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=-2)
-    instances = ApplicationInstance.objects.filter(
+    all_instances = ApplicationInstance.objects.filter(
         spawner="FARGATE",
         state__in=["RUNNING", "SPAWNING"],
         created_date__lt=two_hours_ago,
+        application_template__application_type="TOOL"
     )
+    tool_instances = all_instances.filter(application_template__application_type="TOOL")
+    visualisation_instances = all_instances.filter(application_template__application_type="VISUALISATION")
 
-    # Does this list need to be filtered for custom visualisations? Are there other types we don't wnt to cover?
     # Get all visualisations
     visualisations = VisualisationCatalogueItem.objects.all()
-    # Instantiate list to store vis instances
-    # instances_visualisations = []
-    # for instance in instances:
-    #     # If visualisation's template is the same as the instance's, add instance to list of matching visualisations
-    #     if VisualisationCatalogueItem.objects.filter(
-    #         visualisation_template=instance.application_template
-    #     ):
-    #         instances_visualisations.append(instance)
-    # Create a set of the ids for each matching visualisation
-    # instances_visualisations_ids = set(instances_visualisations.id)
-    current_time = datetime.time.now()
-    current_day = datetime.datetime.now()
+    current_day = datetime.datetime.now(datetime.timezone.utc)
+    current_time = current_day.time()
     for visualisation in visualisations:
         # If the time is between half 8am and 6pm on weekday
         if datetime.time(18, 0, 0) > current_time > datetime.time(8, 30, 0) and current_day.weekday() < 5:
-            # And the id of the vis is not the id of a current instance
-            # if visualisation.id not in instances_visualisations_ids:
             # Get the visualisation and public host, then spawn a vis
             vis = VisualisationCatalogueItem.objects.get(pk=visualisation.id)
             public_host = vis.visualisation_template.host_basename
             spawn_visualisation(public_host)
+            logger.info("kill_idle_fargate: Spawning instance of %s visualisation", instance)
 
-    for instance in instances:
-        if datetime.time.now() > datetime.time(18, 0, 0):
+    def kill_fargate(instances)
+        for instance in instances:
             if instance.state == "SPAWNING":
                 stop_spawner_and_application(instance)
                 continue
@@ -435,6 +426,12 @@ def kill_idle_fargate():
                 logger.exception("kill_idle_fargate: Unable to stop %s", instance)
 
             logger.info("kill_idle_fargate: Stopped application %s", instance)
+    kill_fargate(tool_instances)
+    
+    if current_time > datetime.time(18, 0, 0):
+        kill_fargate(visualisation_instances)
+        
+    
 
     logger.info("kill_idle_fargate: End")
 
