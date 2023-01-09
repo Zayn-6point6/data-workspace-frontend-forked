@@ -400,7 +400,7 @@ def start_stop_fargate():
             spawn_visualisation(public_host)
             logger.info("stop_start_fargate: Spawning instance of %s visualisation", instance)
 
-    def kill_fargate(instances)
+    def kill_fargate(instances):
         for instance in instances:
             if instance.state == "SPAWNING":
                 stop_spawner_and_application(instance)
