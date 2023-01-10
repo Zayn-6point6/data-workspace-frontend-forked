@@ -25,6 +25,8 @@ from dataworkspace.apps.applications.utils import (
     _do_sync_activity_stream_sso_users,
     long_running_query_alert,
     sync_quicksight_permissions,
+    start_stop_fargate,
+    spawn_visualisation,
 )
 from dataworkspace.apps.datasets.constants import UserAccessType
 from dataworkspace.apps.datasets.models import ToolQueryAuditLog, ToolQueryAuditLogTable
@@ -1139,3 +1141,23 @@ class TestLongRunningQueryAlerts:
             ":rotating_light: Found 1 SQL query running for longer than 15 minutes "
             "on the datasets db."
         )
+
+
+class TestStopStartFargate:
+    @pytest.mark.django_db
+    @freeze_time("2020-12-08 18:04:00")
+    def test_vis_startup_in_morning(self):
+        pass
+    def test_vis_shutdown_after_6():
+        application_template = factories.ApplicationTemplateFactory()
+        instance = factories.ApplicationInstanceFactory(
+            application_template=application_template,
+            commit_id="xxx",
+            spawner_application_template_options=json.dumps(
+                {"CONTAINER_NAME": "user-defined-container"}
+            ),
+            spawner_application_instance_id=json.dumps({"task_arn": "arn:test:vis/task-id/999"}),
+        )
+        current_time = freeze_time
+        assert TestStopStartFargate.test_vis_shutdown_after_6(instance, current_time) == True
+
