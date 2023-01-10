@@ -319,8 +319,9 @@ def application_instance_max_cpu(application_instance):
 
     return max_cpu, ts_at_max
 
-
+# Function to spawn a vis without a request (This is still pretty in progress)
 def spawn_visualisation(public_host):
+    # Checks if there's already an instance or if template doesn't exist
     try:
         application_instance = get_api_visible_application_instance_by_public_host(public_host)
     except ApplicationInstance.DoesNotExist:
@@ -342,7 +343,7 @@ def spawn_visualisation(public_host):
     memory = application_template.default_memory
 
     spawner_options = json.dumps(application_options(application_template))
-
+    # Creates an application instance using template, still unsure what to do about "user"
     try:
         application_instance = ApplicationInstance.objects.create(
             # owner=request.user,
@@ -373,9 +374,10 @@ def spawn_visualisation(public_host):
 
 @celery_app.task()
 @close_all_connections_if_not_in_atomic_block
+# Repurposed kill_idle_fargate to instead start and stop tool/visualisation spawners
 def start_stop_fargate():
     logger.info("stop_start_fargate: Start")
-
+    # Gets all instances, then splits these into tools and visualisations
     two_hours_ago = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=-2)
     all_instances = ApplicationInstance.objects.filter(
         spawner="FARGATE",
@@ -389,10 +391,11 @@ def start_stop_fargate():
         application_template__application_type="VISUALISATION"
     )
 
-    # Get all visualisations
+    # Get all visualisations, plus current day and time
     visualisations = VisualisationCatalogueItem.objects.all()
     current_day = datetime.datetime.now(datetime.timezone.utc)
     current_time = current_day.time()
+    # For loop to see if it's the right time to try starting a visualisation
     for visualisation in visualisations:
         # If the time is between half 8am and 6pm on weekday
         if (
@@ -404,7 +407,7 @@ def start_stop_fargate():
             public_host = vis.visualisation_template.host_basename
             spawn_visualisation(public_host)
             logger.info("stop_start_fargate: Spawning instance of %s visualisation", visualisation)
-
+    # Generalised function to kill instances, essentially the same as previous kill_idle_fargate
     def kill_fargate(instances):
         for instance in instances:
             if instance.state == "SPAWNING":
@@ -432,9 +435,9 @@ def start_stop_fargate():
                 logger.exception("stop_start_fargate: Unable to stop %s", instance)
 
             logger.info("stop_start_fargate: Stopped application %s", instance)
-
+    # Called every time the start_stop_fargate function is called to kill 2 hour old tools
     kill_fargate(tool_instances)
-
+    # Only called after 6pm to kill visualisation instances
     if current_time > datetime.time(18, 0, 0):
         kill_fargate(visualisation_instances)
 
