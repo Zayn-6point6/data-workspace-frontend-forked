@@ -372,6 +372,15 @@ def spawn_visualisation(public_host):
     return JsonResponse(api_application_dict(application_instance), status=200)
 
 
+def should_shutdown(application_template, current_time):
+    if application_template.application_type=="VISUALISATION":
+        if current_time > datetime.time(18,0,0):
+            print(current_time)
+            return True
+        else:
+            return False
+
+
 @celery_app.task()
 @close_all_connections_if_not_in_atomic_block
 # Repurposed kill_idle_fargate to instead start and stop tool/visualisation spawners
@@ -408,11 +417,6 @@ def start_stop_fargate():
             spawn_visualisation(public_host)
             logger.info("stop_start_fargate: Spawning instance of %s visualisation", visualisation)
 
-    def should_shutdown(instance, current_time):
-        if instance.application_template__application_type=="VISUALISATION":
-            if current_time > datetime.time(18,0,0):
-                print(instance, current_time)
-                return True
 
     # Generalised function to kill instances, essentially the same as previous kill_idle_fargate
     def kill_fargate(instances):

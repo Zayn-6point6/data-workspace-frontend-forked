@@ -27,6 +27,7 @@ from dataworkspace.apps.applications.utils import (
     sync_quicksight_permissions,
     start_stop_fargate,
     spawn_visualisation,
+    should_shutdown,
 )
 from dataworkspace.apps.datasets.constants import UserAccessType
 from dataworkspace.apps.datasets.models import ToolQueryAuditLog, ToolQueryAuditLogTable
@@ -1146,18 +1147,19 @@ class TestLongRunningQueryAlerts:
 class TestStopStartFargate:
     @pytest.mark.django_db
     @freeze_time("2020-12-08 18:04:00")
-    def test_vis_startup_in_morning(self):
-        pass
-    def test_vis_shutdown_after_6():
-        application_template = factories.ApplicationTemplateFactory()
-        instance = factories.ApplicationInstanceFactory(
-            application_template=application_template,
-            commit_id="xxx",
-            spawner_application_template_options=json.dumps(
-                {"CONTAINER_NAME": "user-defined-container"}
-            ),
-            spawner_application_instance_id=json.dumps({"task_arn": "arn:test:vis/task-id/999"}),
-        )
-        current_time = freeze_time
-        assert TestStopStartFargate.test_vis_shutdown_after_6(instance, current_time) == True
+    def test_vis_shutdown_after_6(self):
+        app_template = factories.VisualisationTemplateFactory()
+        current_time = datetime.datetime.now().time()
+        result = should_shutdown(app_template, current_time)
+        assert result == True
+
+    @pytest.mark.django_db
+    @freeze_time("2020-12-08 13:05:00")
+    def test_vis_alive_before_6(self):
+        app_template = factories.VisualisationTemplateFactory()
+        current_time = datetime.datetime.now().time()
+        result = should_shutdown(app_template, current_time)
+        assert result == False
+
+        
 
