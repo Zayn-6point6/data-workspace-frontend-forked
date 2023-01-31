@@ -717,11 +717,7 @@ def _fargate_task_ip(cluster_name, arn):
 
 
 def _fargate_task_describe(cluster_name, arn):
-    config = Config(
-        retries=dict(
-            max_attempts=10
-        )
-    )
+    config = Config(retries=dict(max_attempts=10))
     client = boto3.client("ecs", config=config)
 
     described_tasks = client.describe_tasks(cluster=cluster_name, tasks=[arn])
