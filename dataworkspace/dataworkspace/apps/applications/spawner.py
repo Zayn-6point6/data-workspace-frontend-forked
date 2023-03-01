@@ -527,7 +527,12 @@ class FargateSpawner:
             return "STOPPED"
 
         except ClientError as exception_obj:
-            logger.exception("FARGATE %s %s", spawner_application_id_parsed, proxy_url)
+            logger.exception(
+                "FARGATE %s %s - %s",
+                spawner_application_id_parsed,
+                proxy_url,
+                exception_obj.response,
+            )
             if exception_obj.response["Error"]["Code"] == "ThrottlingException":
                 return "RUNNING"
             return "STOPPED"
