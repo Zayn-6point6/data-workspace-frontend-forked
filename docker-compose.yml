@@ -197,7 +197,7 @@ services:
       context: .
       dockerfile: ./frontend/Dockerfile
     volumes:
-      - ./dataworkspace/dataworkspace/static/js:/frontend
+      - ./dataworkspace/dataworkspace/static/js/react_apps:/frontend
     ports:
       - "3000:3000"
 
