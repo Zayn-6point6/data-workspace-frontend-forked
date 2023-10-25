@@ -26,6 +26,7 @@ RUN \
 		gnupg2 && \
 	rm -rf /var/lib/apt/lists/* && \
     echo "deb https://s3-eu-west-2.amazonaws.com/mirrors.notebook.uktrade.io/debian/ bullseye main" > /etc/apt/sources.list && \
+    echo "deb http://cloud.r-project.org/bin/linux/debian bullseye-cran40/" >> /etc/apt/sources.list && \
 	echo "Acquire{Check-Valid-Until false; Retries 10;}" >> /etc/apt/apt.conf && \
 	until apt-key adv --keyserver keyserver.ubuntu.com --recv-key '95C0FAF38DB3CCAD0C080A7BDC78B2DDEABC47B7'; do sleep 10; done && \
     gpg --armor --export '95C0FAF38DB3CCAD0C080A7BDC78B2DDEABC47B7' | tee /etc/apt/trusted.gpg.d/cran_debian_key.asc && \
@@ -39,10 +40,13 @@ RUN \
         libssl-dev \
         libssh2-1-dev \
         zlib1g-dev \
-        r-base \
-        r-recommended \
+        r-base=4.3.1-1~bullseyecran.0 \
+        r-base-dev=4.3.1-1~bullseyecran.0 \
+        r-recommended=4.3.1-1~bullseyecran.0 \
         r-cran-magrittr && \
 	rm -rf /var/lib/apt/lists/* && \
+	# Remove the last line from sources: the CRAN debian repo that has R itself, which we don't mirror
+	sed -i '$d' /etc/apt/sources.list && \
 	echo 'local({' >> /usr/lib/R/etc/Rprofile.site && \
 	echo '  r = getOption("repos")' >> /usr/lib/R/etc/Rprofile.site && \
 	echo '  r["CRAN"] = "https://s3-eu-west-2.amazonaws.com/mirrors.notebook.uktrade.io/cran-binary-rv4/"' >> /usr/lib/R/etc/Rprofile.site && \
