@@ -548,7 +548,21 @@ class FargateSpawner:
         application_instance = ApplicationInstance.objects.get(id=application_instance_id)
         options = json.loads(application_instance.spawner_application_template_options)
         cluster_name = options["CLUSTER_NAME"]
-        task_arn = json.loads(application_instance.spawner_application_instance_id)["task_arn"]
+        try:
+            task_arn = json.loads(application_instance.spawner_application_instance_id)["task_arn"]
+        except KeyError:
+            logger.info(
+                "Unable to find task_arn for started application instance. Marking tool as STOPPED"
+            )
+            application_instance.state = "STOPPED"
+            application_instance.single_running_or_spawning_integrity = str(
+                application_instance.id
+            )
+            application_instance.save(
+                update_fields=["state", "single_running_or_spawning_integrity"]
+            )
+            return
+
         _fargate_task_stop(cluster_name, task_arn)
 
         sleep_time = 1
