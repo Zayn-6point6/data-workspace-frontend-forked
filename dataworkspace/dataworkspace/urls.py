@@ -2,7 +2,7 @@ import logging
 
 from django.conf import settings
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 
 from dataworkspace.apps.accounts.utils import login_required
 from dataworkspace.apps.core.views import (
@@ -21,6 +21,7 @@ from dataworkspace.apps.core.views import (
     public_error_404_html_view,
     public_error_500_html_view,
     healthcheck_view,
+    contact_view,
     SupportView,
     NewsletterSubscriptionView,
     table_data_view,
@@ -114,7 +115,7 @@ urlpatterns = [
         ),
     ),
     path("healthcheck", healthcheck_view),  # No authentication
-    path("support-and-feedback/", login_required(SupportView.as_view()), name="support"),
+    re_path(r"^support-and-feedback/", login_required(contact_view), name="support"),
     path(
         "support/success/<str:ticket_id>",
         login_required(SupportView.as_view()),

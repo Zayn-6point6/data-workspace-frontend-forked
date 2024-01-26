@@ -14,6 +14,7 @@ from django.http import (
     HttpResponseServerError,
     JsonResponse,
 )
+from csp.decorators import csp_update
 from django.shortcuts import render
 from django.urls import reverse
 from django.views import View
@@ -157,6 +158,9 @@ def about_page_view(request):
 def welcome_page_view(request):
     return render(request, "welcome.html", {}, status=200)
 
+@csp_update(SCRIPT_SRC=settings.REACT_SCRIPT_SRC)
+def contact_view(request):
+    return render(request, "contact.html", {}, status=200)
 
 class SupportView(FormView):
     form_class = SupportForm

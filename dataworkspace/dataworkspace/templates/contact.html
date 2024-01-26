@@ -1,0 +1,15 @@
+{% extends '_main.html' %}
+{% load render_bundle from webpack_loader %}
+{% load static %}
+
+{% block page_title %}About - {{ block.super }}{% endblock %}
+
+{% block content %}
+
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    <div id="contact-us"></div>
+  </div>
+</div>
+{% render_bundle "contact-us" "js" %}
+{% endblock %}
