@@ -205,7 +205,15 @@ def new_private_database_credentials(
             for db_role_name in db_shared_roles + [db_role]:
                 ensure_db_role(db_role_name)
 
-            ensure_db_role("test")
+            # DB connection role
+            cur.execute(
+                sql.SQL("SELECT oid from pg_database where datname = {};").format(
+                    sql.Literal(database_data["NAME"])
+                )
+            )
+            db_oid = cur.fetchone()[0]
+            logger.info("Database %s oid is %s", database_data["NAME"], db_oid)
+            ensure_db_role(f"db_conn_{db_oid}")
 
             # On RDS, to do SET ROLE, you have to GRANT the role to the current master user. You also
             # have to have (at least) USAGE on each user schema to call has_table_privilege. So,
@@ -539,12 +547,6 @@ def new_private_database_credentials(
                             sql.Identifier(db_shared_role),
                         )
                     )
-            db_oid = cur.execute(
-                sql.SQL("SELECT oid from pg_database where datname = {};").format(
-                    sql.Literal(database_data["NAME"])
-                )
-            ).fetchone()
-            logger.info("Database %s oid is %s", database_data["NAME"], db_oid)
             cur.execute(
                 sql.SQL("GRANT CONNECT ON DATABASE {} TO {};").format(
                     sql.Identifier(database_data["NAME"]), sql.Identifier(db_role)
