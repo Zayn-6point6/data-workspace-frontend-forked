@@ -539,7 +539,11 @@ def new_private_database_credentials(
                             sql.Identifier(db_shared_role),
                         )
                     )
-
+            db_oid = cur.execute(
+                sql.SQL( "SELECT oid from pg_database where datname = {};").format(
+                    sql.Literal(database_data["NAME"]))
+            ).fetchone()[0]
+            logger.info("Database %s oid is %s", database_data["NAME"], db_oid)
             cur.execute(
                 sql.SQL("GRANT CONNECT ON DATABASE {} TO {};").format(
                     sql.Identifier(database_data["NAME"]), sql.Identifier(db_role)
