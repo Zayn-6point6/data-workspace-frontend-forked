@@ -205,6 +205,8 @@ def new_private_database_credentials(
             for db_role_name in db_shared_roles + [db_role]:
                 ensure_db_role(db_role_name)
 
+            ensure_db_role("test")
+
             # On RDS, to do SET ROLE, you have to GRANT the role to the current master user. You also
             # have to have (at least) USAGE on each user schema to call has_table_privilege. So,
             # we make sure the master user has this before the user schema is even created. But, since
