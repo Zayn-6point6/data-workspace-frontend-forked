@@ -540,8 +540,9 @@ def new_private_database_credentials(
                         )
                     )
             db_oid = cur.execute(
-                sql.SQL( "SELECT oid from pg_database where datname = {};").format(
-                    sql.Literal(database_data["NAME"]))
+                sql.SQL("SELECT oid from pg_database where datname = {};").format(
+                    sql.Literal(database_data["NAME"])
+                )
             ).fetchone()[0]
             logger.info("Database %s oid is %s", database_data["NAME"], db_oid)
             cur.execute(
