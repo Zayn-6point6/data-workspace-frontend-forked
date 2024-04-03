@@ -8,6 +8,7 @@ from dataworkspace.apps.dw_admin.views import (
     ReferenceDatasetAdminDeleteAllView,
     SourceLinkUploadView,
     ReferenceDatasetAdminUploadView,
+    GovernanceAssignAdminView,
 )
 
 urlpatterns = [
@@ -50,6 +51,11 @@ urlpatterns = [
         "stats",
         view=DataWorkspaceStatsView.as_view(),
         name="data-workspace-stats",
+    ),
+    path(
+        "assign-ownership",
+        view=GovernanceAssignAdminView.as_view(),
+        name="assign-ownership",
     ),
     path(
         "trends",

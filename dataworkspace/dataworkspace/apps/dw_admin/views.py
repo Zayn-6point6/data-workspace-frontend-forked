@@ -12,6 +12,8 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.admin import helpers
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.postgres.aggregates.general import BoolOr
+from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db.models import (
@@ -20,8 +22,12 @@ from django.db.models import (
     DurationField,
     ExpressionWrapper,
     F,
+    Q,
     Sum,
     Value,
+    Case,
+    When,
+    BooleanField
 )
 from django.db.models.functions import Concat, TruncDate
 from django.http import Http404, HttpResponseServerError, HttpResponseRedirect
@@ -58,7 +64,49 @@ from dataworkspace.apps.your_files.models import YourFilesUserPrefixStats
 from dataworkspace.datasets_db import get_all_source_tables
 
 
+class AssignDatasetsForm(forms.Form):
+    user = forms.ModelChoiceField(queryset=User.objects.all())
+
+    def get_datasets(self):
+        user_id = self.data['user']
+        datasets = DataSet.objects.all().annotate(
+            is_contact=BoolOr(
+                Case(
+                    When(
+                        Q(information_asset_owner=user_id),
+                        then=True,
+                    ),
+                    default=False,
+                    output_field=BooleanField(),
+                ),
+            ),
+        )
+        return datasets
+
+
+class GovernanceAssignAdminView(FormView):
+    template_name = "admin/governance_admin_assign.html"
+    form_class = AssignDatasetsForm
+
+    def get_context_data(self, **kwargs):
+        print('whooooooooo', self, **kwargs)
+        context = super().get_context_data(**kwargs)
+        context['datasets'] = self.kwargs.get('datasets')
+        print('ahhhhhhh', self.kwargs)
+        return context
+
+    def form_valid(self, form):
+        datasets = form.get_datasets()
+        self.get_context_data(self, datasets)
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse("dw-admin:assign-ownership")
+
+
 class ReferenceDataRecordMixin(UserPassesTestMixin):
+    template_name = "admin/reference_dataset_upload_records.html"
+
     def test_func(self):
         return self.request.user.is_superuser
 
