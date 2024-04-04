@@ -7,7 +7,7 @@
     </form>
         {% for data in datasets %}
 
-    <div>{{data}}</div>
+    <div>Name: {{data.name}} Current owner: {{data.information_asset_owner}} Is owner: {{data.is_owner}}</div>
 
 
         {% endfor %}

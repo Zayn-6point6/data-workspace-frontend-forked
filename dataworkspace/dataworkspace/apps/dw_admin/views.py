@@ -49,6 +49,7 @@ from dataworkspace.apps.datasets.models import (
     ReferenceDatasetUploadLog,
     ReferenceDatasetUploadLogRecord,
     SourceTable,
+    VisualisationCatalogueItem,
 )
 from dataworkspace.apps.dw_admin.forms import (
     ReferenceDataRowDeleteForm,
@@ -111,6 +112,7 @@ class GovernanceAssignSelectDatasetAdminView(FormView):
 
     def get_datasets(self, user_id):
         current_user = User.objects.all().filter(id=user_id)
+        print('current_user', current_user[0])
         datasets = DataSet.objects.all().annotate(
             is_owner=BoolOr(
                 Case(
@@ -124,9 +126,34 @@ class GovernanceAssignSelectDatasetAdminView(FormView):
                     output_field=BooleanField(),
                 ),
             ),
-        )
-        print('datasets', list(datasets)[1].__dict__)
-        return datasets
+        ).filter(information_asset_owner=True).filter(is_owner=True)
+        ref_datasets = ReferenceDataset.objects.all().annotate(
+            is_owner=BoolOr(
+                Case(
+                    When(
+                        Q(information_asset_owner=current_user[0])
+                        | Q(information_asset_manager=current_user[0]),
+                        then=True,
+                    ),
+                    default=False,
+                    output_field=BooleanField(),
+                ),
+            ),
+        ).filter(is_owner=True)
+        vis_datasets = VisualisationCatalogueItem.objects.all().annotate(
+            is_owner=BoolOr(
+                Case(
+                    When(
+                        Q(information_asset_owner=current_user[0])
+                        | Q(information_asset_manager=current_user[0]),
+                        then=True,
+                    ),
+                    default=False,
+                    output_field=BooleanField(),
+                ),
+            ),
+        ).filter(is_owner=True)
+        return (list(datasets) + list(ref_datasets) + list(vis_datasets))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
