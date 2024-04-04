@@ -5,5 +5,10 @@
          {{ form }}
         <input type="submit" value="Submit" class="default" />
     </form>
-        {{datasets}}
+        {% for data in datasets %}
+
+    <div>{{data}}</div>
+
+
+        {% endfor %}
 {% endblock %}

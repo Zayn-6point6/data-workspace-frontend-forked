@@ -64,10 +64,18 @@ from dataworkspace.apps.your_files.models import YourFilesUserPrefixStats
 from dataworkspace.datasets_db import get_all_source_tables
 
 
-class AssignDatasetsForm(forms.Form):
+class FormOne(forms.Form):
+    user = forms.ModelChoiceField(queryset=User.objects.all())
+
+    def get_user(self):
+        return self.data['user']
+
+
+class FormTwo(forms.Form):
     user = forms.ModelChoiceField(queryset=User.objects.all())
 
     def get_datasets(self):
+        print('self!!!!!', self.__dict__)
         user_id = self.data['user']
         datasets = DataSet.objects.all().annotate(
             is_contact=BoolOr(
@@ -84,21 +92,48 @@ class AssignDatasetsForm(forms.Form):
         return datasets
 
 
-class GovernanceAssignAdminView(FormView):
+class GovernanceAssignSelectUserAdminView(FormView):
     template_name = "admin/governance_admin_assign.html"
-    form_class = AssignDatasetsForm
+    form_class = FormOne
 
     def get_context_data(self, **kwargs):
-        print('whooooooooo', self, **kwargs)
         context = super().get_context_data(**kwargs)
-        context['datasets'] = self.kwargs.get('datasets')
-        print('ahhhhhhh', self.kwargs)
         return context
 
     def form_valid(self, form):
-        datasets = form.get_datasets()
-        self.get_context_data(self, datasets)
-        return super().form_valid(form)
+        user_id = form.get_user()
+        return HttpResponseRedirect(reverse('dw-admin:assign-ownership-two', args=(user_id,)))
+
+
+class GovernanceAssignSelectDatasetAdminView(FormView):
+    template_name = "admin/governance_admin_assign.html"
+    form_class = FormTwo
+
+    def get_datasets(self, user_id):
+        current_user = User.objects.all().filter(id=user_id)
+        datasets = DataSet.objects.all().annotate(
+            is_owner=BoolOr(
+                Case(
+                    When(
+                        Q(information_asset_owner=current_user[0])
+                        | Q(information_asset_manager=current_user[0])
+                        | Q(data_catalogue_editors=current_user[0]),
+                        then=True,
+                    ),
+                    default=False,
+                    output_field=BooleanField(),
+                ),
+            ),
+        )
+        print('datasets', list(datasets)[1].__dict__)
+        return datasets
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user_id = self.kwargs.get('id')
+        datasets = self.get_datasets(user_id)
+        context['datasets'] = datasets
+        return context
 
     def get_success_url(self):
         return reverse("dw-admin:assign-ownership")
