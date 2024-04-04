@@ -2,6 +2,7 @@ import csv
 import os
 from datetime import date, datetime, timedelta
 
+from aiopg import connect
 from botocore.exceptions import ClientError
 from celery import states
 from dateutil.relativedelta import relativedelta
@@ -16,6 +17,7 @@ from django.contrib.postgres.aggregates.general import BoolOr
 from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
+from django.db import connection
 from django.db.models import (
     Avg,
     Count,
@@ -27,7 +29,7 @@ from django.db.models import (
     Value,
     Case,
     When,
-    BooleanField
+    BooleanField,
 )
 from django.db.models.functions import Concat, TruncDate
 from django.http import Http404, HttpResponseServerError, HttpResponseRedirect
@@ -37,6 +39,7 @@ from django.urls import reverse
 from django.utils.timesince import timesince
 from django.views.generic import FormView, CreateView, TemplateView
 from django_celery_results.models import TaskResult
+from psycopg2.sql import Literal, SQL
 
 from dataworkspace.apps.applications.models import ApplicationInstance
 from dataworkspace.apps.core.boto3_client import get_s3_client
@@ -69,15 +72,15 @@ class FormOne(forms.Form):
     user = forms.ModelChoiceField(queryset=User.objects.all())
 
     def get_user(self):
-        return self.data['user']
+        return self.data["user"]
 
 
 class FormTwo(forms.Form):
     user = forms.ModelChoiceField(queryset=User.objects.all())
 
     def get_datasets(self):
-        print('self!!!!!', self.__dict__)
-        user_id = self.data['user']
+        print("self!!!!!", self.__dict__)
+        user_id = self.data["user"]
         datasets = DataSet.objects.all().annotate(
             is_contact=BoolOr(
                 Case(
@@ -103,64 +106,97 @@ class GovernanceAssignSelectUserAdminView(FormView):
 
     def form_valid(self, form):
         user_id = form.get_user()
-        return HttpResponseRedirect(reverse('dw-admin:assign-ownership-two', args=(user_id,)))
+        return HttpResponseRedirect(reverse("dw-admin:assign-ownership-two", args=(user_id,)))
 
 
 class GovernanceAssignSelectDatasetAdminView(FormView):
-    template_name = "admin/governance_admin_assign.html"
+    template_name = "admin/governance_admin_assign_2.html"
     form_class = FormTwo
 
     def get_datasets(self, user_id):
         current_user = User.objects.all().filter(id=user_id)
         print('current_user', current_user[0])
-        datasets = DataSet.objects.all().annotate(
-            is_owner=BoolOr(
-                Case(
-                    When(
-                        Q(information_asset_owner=current_user[0])
-                        | Q(information_asset_manager=current_user[0])
-                        | Q(data_catalogue_editors=current_user[0]),
-                        then=True,
+        datasets = (
+            DataSet.objects.all()
+            .annotate(
+                is_owner=BoolOr(
+                    Case(
+                        When(
+                            Q(information_asset_owner=current_user[0])
+                            | Q(information_asset_manager=current_user[0])
+                            | Q(data_catalogue_editors=current_user[0]),
+                            then=True,
+                        ),
+                        default=False,
+                        output_field=BooleanField(),
                     ),
-                    default=False,
-                    output_field=BooleanField(),
                 ),
-            ),
-        ).filter(information_asset_owner=True).filter(is_owner=True)
-        ref_datasets = ReferenceDataset.objects.all().annotate(
-            is_owner=BoolOr(
-                Case(
-                    When(
-                        Q(information_asset_owner=current_user[0])
-                        | Q(information_asset_manager=current_user[0]),
-                        then=True,
+            )
+            .filter(information_asset_owner=True)
+            .filter(is_owner=True)
+        )
+        ref_datasets = (
+            ReferenceDataset.objects.all()
+            .annotate(
+                is_owner=BoolOr(
+                    Case(
+                        When(
+                            Q(information_asset_owner=current_user[0])
+                            | Q(information_asset_manager=current_user[0]),
+                            then=True,
+                        ),
+                        default=False,
+                        output_field=BooleanField(),
                     ),
-                    default=False,
-                    output_field=BooleanField(),
                 ),
-            ),
-        ).filter(is_owner=True)
-        vis_datasets = VisualisationCatalogueItem.objects.all().annotate(
-            is_owner=BoolOr(
-                Case(
-                    When(
-                        Q(information_asset_owner=current_user[0])
-                        | Q(information_asset_manager=current_user[0]),
-                        then=True,
+            )
+            .filter(is_owner=True)
+        )
+        vis_datasets = (
+            VisualisationCatalogueItem.objects.all()
+            .annotate(
+                is_owner=BoolOr(
+                    Case(
+                        When(
+                            Q(information_asset_owner=current_user[0])
+                            | Q(information_asset_manager=current_user[0]),
+                            then=True,
+                        ),
+                        default=False,
+                        output_field=BooleanField(),
                     ),
-                    default=False,
-                    output_field=BooleanField(),
                 ),
-            ),
-        ).filter(is_owner=True)
-        return (list(datasets) + list(ref_datasets) + list(vis_datasets))
+            )
+            .filter(is_owner=True)
+        )
+        return list(datasets) + list(ref_datasets) + list(vis_datasets)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        user_id = self.kwargs.get('id')
+        user_id = self.kwargs.get("id")
         datasets = self.get_datasets(user_id)
-        context['datasets'] = datasets
+        print("datasets", datasets)
+        context["datasets"] = datasets
+        context["user_id"] = User.objects.filter(id=user_id).first()
         return context
+
+    def form_valid(self, form):
+        dataset_ids = form.data.getlist("dataset_id")
+        new_owner = form.data["user"]
+        print("dataset_ids", dataset_ids)
+
+        with connection.cursor() as cursor:
+            try:
+                cursor.execute(
+                    SQL(
+                        "update app_dataset set enquiries_contact_id = 2 where id in ('9c602462-543c-4569-b518-eca3b044dae6', 'f70aa04b-d8ec-46ef-92aa-7e480e202552')",
+                    )
+                )
+            except Exception as e:
+                print("Error123", e)
+
+        # update app_dataset set information_asset_manager_id = 14895 where id in () DATASET_IDS
+        return HttpResponseRedirect(reverse("dw-admin:assign-ownership-two", args=(1,)))
 
     def get_success_url(self):
         return reverse("dw-admin:assign-ownership")
@@ -224,9 +260,11 @@ class ReferenceDatasetAdminEditView(ReferenceDataRecordMixin, FormView):
         reference_dataset = self._get_reference_dataset()
         record_model = reference_dataset.get_record_model_class()
         field_names = ["reference_dataset"] + [
-            field.column_name
-            if field.data_type != ReferenceDatasetField.DATA_TYPE_FOREIGN_KEY
-            else field.relationship_name
+            (
+                field.column_name
+                if field.data_type != ReferenceDatasetField.DATA_TYPE_FOREIGN_KEY
+                else field.relationship_name
+            )
             for _, field in reference_dataset.editable_fields.items()
         ]
 
@@ -383,9 +421,11 @@ class ReferenceDatasetAdminUploadView(ReferenceDataRecordMixin, FormView):
         reference_dataset = self._get_reference_dataset()
         record_model_class = reference_dataset.get_record_model_class()
         field_map = {
-            field.name.lower()
-            if field.data_type != field.DATA_TYPE_FOREIGN_KEY
-            else field.relationship_name_for_record_forms.lower(): field
+            (
+                field.name.lower()
+                if field.data_type != field.DATA_TYPE_FOREIGN_KEY
+                else field.relationship_name_for_record_forms.lower()
+            ): field
             for _, field in reference_dataset.editable_fields.items()
         }
         self.upload_log = ReferenceDatasetUploadLog.objects.create(
@@ -417,9 +457,9 @@ class ReferenceDatasetAdminUploadView(ReferenceDataRecordMixin, FormView):
                         try:
                             link_id = linked_dataset.get_record_by_custom_id(value).id
                         except linked_dataset.get_record_model_class().DoesNotExist:
-                            errors[
-                                header_name
-                            ] = "Identifier {} does not exist in linked dataset".format(value)
+                            errors[header_name] = (
+                                "Identifier {} does not exist in linked dataset".format(value)
+                            )
                     form_data[field.relationship_name + "_id"] = link_id
                 else:
                     # Otherwise validate using the associated form field
@@ -702,9 +742,11 @@ class DataWorkspaceStatsView(LoginRequiredMixin, UserPassesTestMixin, TemplateVi
         ctx["current_stats"].append(
             {
                 "title": "Average DB perms query runtime",
-                "stat": f"{round(perms_query_runtimes.aggregate(Avg('stat'))['stat__avg'], 1)}s"
-                if perms_query_runtimes.exists()
-                else "N/A",
+                "stat": (
+                    f"{round(perms_query_runtimes.aggregate(Avg('stat'))['stat__avg'], 1)}s"
+                    if perms_query_runtimes.exists()
+                    else "N/A"
+                ),
                 "subtitle": "In the past 7 days",
                 "url": f"{reverse('admin:eventlog_systemstatlog_changelist')}?"
                 f"admin:type__exact={SystemStatLogEventType.PERMISSIONS_QUERY_RUNTIME}",
