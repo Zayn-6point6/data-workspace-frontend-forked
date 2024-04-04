@@ -70,6 +70,13 @@ from dataworkspace.datasets_db import get_all_source_tables
 
 class FormOne(forms.Form):
     user = forms.ModelChoiceField(queryset=User.objects.all())
+    role = forms.ChoiceField(
+        choices=[
+            ("information_asset_owner_id", "Information asset owner"),
+            ("information_asset_manager_id", "Information asset manager"),
+            ("enquiries_contact_id", "Enquiries contact"),
+        ]
+    )
 
     def get_user(self):
         return self.data["user"]
@@ -77,23 +84,6 @@ class FormOne(forms.Form):
 
 class FormTwo(forms.Form):
     user = forms.ModelChoiceField(queryset=User.objects.all())
-
-    def get_datasets(self):
-        print("self!!!!!", self.__dict__)
-        user_id = self.data["user"]
-        datasets = DataSet.objects.all().annotate(
-            is_contact=BoolOr(
-                Case(
-                    When(
-                        Q(information_asset_owner=user_id),
-                        then=True,
-                    ),
-                    default=False,
-                    output_field=BooleanField(),
-                ),
-            ),
-        )
-        return datasets
 
 
 class GovernanceAssignSelectUserAdminView(FormView):
@@ -106,7 +96,13 @@ class GovernanceAssignSelectUserAdminView(FormView):
 
     def form_valid(self, form):
         user_id = form.get_user()
-        return HttpResponseRedirect(reverse("dw-admin:assign-ownership-two", args=(user_id,)))
+        role = form.data["role"]
+        return HttpResponseRedirect(
+            reverse(
+                "dw-admin:assign-ownership-two",
+                args=(user_id,role,),
+            )
+        )
 
 
 class GovernanceAssignSelectDatasetAdminView(FormView):
@@ -115,7 +111,7 @@ class GovernanceAssignSelectDatasetAdminView(FormView):
 
     def get_datasets(self, user_id):
         current_user = User.objects.all().filter(id=user_id)
-        print('current_user', current_user[0])
+        print("current_user", current_user[0])
         datasets = (
             DataSet.objects.all()
             .annotate(
@@ -124,7 +120,8 @@ class GovernanceAssignSelectDatasetAdminView(FormView):
                         When(
                             Q(information_asset_owner=current_user[0])
                             | Q(information_asset_manager=current_user[0])
-                            | Q(data_catalogue_editors=current_user[0]),
+                            | Q(data_catalogue_editors=current_user[0])
+                            | Q(enquiries_contact=current_user[0]),
                             then=True,
                         ),
                         default=False,
@@ -132,7 +129,6 @@ class GovernanceAssignSelectDatasetAdminView(FormView):
                     ),
                 ),
             )
-            .filter(information_asset_owner=True)
             .filter(is_owner=True)
         )
         ref_datasets = (
@@ -142,7 +138,8 @@ class GovernanceAssignSelectDatasetAdminView(FormView):
                     Case(
                         When(
                             Q(information_asset_owner=current_user[0])
-                            | Q(information_asset_manager=current_user[0]),
+                            | Q(information_asset_manager=current_user[0])
+                            | Q(enquiries_contact=current_user[0]),
                             then=True,
                         ),
                         default=False,
@@ -159,7 +156,8 @@ class GovernanceAssignSelectDatasetAdminView(FormView):
                     Case(
                         When(
                             Q(information_asset_owner=current_user[0])
-                            | Q(information_asset_manager=current_user[0]),
+                            | Q(information_asset_manager=current_user[0])
+                            | Q(enquiries_contact=current_user[0]),
                             then=True,
                         ),
                         default=False,
@@ -170,32 +168,35 @@ class GovernanceAssignSelectDatasetAdminView(FormView):
             .filter(is_owner=True)
         )
         return list(datasets) + list(ref_datasets) + list(vis_datasets)
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        print(self.request.GET)
+        return kwargs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user_id = self.kwargs.get("id")
-        datasets = self.get_datasets(user_id)
-        print("datasets", datasets)
-        context["datasets"] = datasets
+        context["datasets"] = self.get_datasets(user_id)
         context["user_id"] = User.objects.filter(id=user_id).first()
+        context["role"] = self.kwargs.get("role")
         return context
 
     def form_valid(self, form):
         dataset_ids = form.data.getlist("dataset_id")
         new_owner = form.data["user"]
-        print("dataset_ids", dataset_ids)
+        print("dataset_ids", tuple(dataset_ids))
 
         with connection.cursor() as cursor:
             try:
                 cursor.execute(
                     SQL(
-                        "update app_dataset set enquiries_contact_id = 2 where id in ('9c602462-543c-4569-b518-eca3b044dae6', 'f70aa04b-d8ec-46ef-92aa-7e480e202552')",
-                    )
+                        "update app_dataset set enquiries_contact_id = {} where id in {}",
+                    ).format(Literal(new_owner), Literal(tuple(dataset_ids)))
                 )
             except Exception as e:
                 print("Error123", e)
 
-        # update app_dataset set information_asset_manager_id = 14895 where id in () DATASET_IDS
         return HttpResponseRedirect(reverse("dw-admin:assign-ownership-two", args=(1,)))
 
     def get_success_url(self):
@@ -522,11 +523,6 @@ class SourceLinkUploadView(UserPassesTestMixin, CreateView):  # pylint: disable=
         dataset = self._get_dataset()
         ctx.update({"dataset": dataset, "opts": dataset._meta})
         return ctx
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs["initial"] = {"dataset": self._get_dataset()}
-        return kwargs
 
     def get_form(self, form_class=None):
         form = self.get_form_class()(**self.get_form_kwargs())

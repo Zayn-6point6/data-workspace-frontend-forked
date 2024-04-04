@@ -64,7 +64,7 @@ urlpatterns = [
         name="assign-ownership",
     ),
     path(
-        "assign-ownership/<int:id>/",
+        "assign-ownership/<int:id>/<str:role>/",
         view=GovernanceAssignSelectDatasetAdminView.as_view(),
         name="assign-ownership-two",
     ),
