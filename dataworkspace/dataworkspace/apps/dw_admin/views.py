@@ -39,7 +39,7 @@ from django.urls import reverse
 from django.utils.timesince import timesince
 from django.views.generic import FormView, CreateView, TemplateView
 from django_celery_results.models import TaskResult
-from psycopg2.sql import Literal, SQL
+from psycopg2.sql import Literal, SQL, Identifier
 
 from dataworkspace.apps.applications.models import ApplicationInstance
 from dataworkspace.apps.core.boto3_client import get_s3_client
@@ -100,7 +100,7 @@ class GovernanceAssignSelectUserAdminView(FormView):
         return HttpResponseRedirect(
             reverse(
                 "dw-admin:assign-ownership-two",
-                args=(user_id,role,),
+                args=(user_id, role,),
             )
         )
 
@@ -168,7 +168,7 @@ class GovernanceAssignSelectDatasetAdminView(FormView):
             .filter(is_owner=True)
         )
         return list(datasets) + list(ref_datasets) + list(vis_datasets)
-    
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         print(self.request.GET)
@@ -185,22 +185,27 @@ class GovernanceAssignSelectDatasetAdminView(FormView):
     def form_valid(self, form):
         dataset_ids = form.data.getlist("dataset_id")
         new_owner = form.data["user"]
-        print("dataset_ids", tuple(dataset_ids))
+        role = self.kwargs.get("role")
+
+        print('role', role)
+        print('new_owner', new_owner)
+        print('dataset_ids', tuple(dataset_ids))
 
         with connection.cursor() as cursor:
             try:
                 cursor.execute(
                     SQL(
-                        "update app_dataset set enquiries_contact_id = {} where id in {}",
-                    ).format(Literal(new_owner), Literal(tuple(dataset_ids)))
+                        "update app_dataset set {} = {} where id in {}",
+                    ).format(Identifier(role), Literal(new_owner), Literal(tuple(dataset_ids)))
                 )
             except Exception as e:
                 print("Error123", e)
 
-        return HttpResponseRedirect(reverse("dw-admin:assign-ownership-two", args=(1,)))
+        return HttpResponseRedirect(reverse("dw-admin:assign-ownership-three"))
 
-    def get_success_url(self):
-        return reverse("dw-admin:assign-ownership")
+
+class GovernanceAssignSuccessAdminView(TemplateView):
+    template_name = "admin/governance_admin_assign_3.html"
 
 
 class ReferenceDataRecordMixin(UserPassesTestMixin):

@@ -10,6 +10,7 @@ from dataworkspace.apps.dw_admin.views import (
     ReferenceDatasetAdminUploadView,
     GovernanceAssignSelectUserAdminView,
     GovernanceAssignSelectDatasetAdminView,
+    GovernanceAssignSuccessAdminView,
 )
 
 urlpatterns = [
@@ -67,5 +68,10 @@ urlpatterns = [
         "assign-ownership/<int:id>/<str:role>/",
         view=GovernanceAssignSelectDatasetAdminView.as_view(),
         name="assign-ownership-two",
+    ),
+    path(
+        "assign-ownership/success",
+        view=GovernanceAssignSuccessAdminView.as_view(),
+        name="assign-ownership-three",
     ),
 ]

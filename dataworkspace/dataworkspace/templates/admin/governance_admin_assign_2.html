@@ -8,6 +8,7 @@
     <label for="dataset_id">{{data.name}}: {{data.id}}</label>
   </div>
   {% endfor %}
+  <input type="hidden" value="{{data.role}}" name="role" />
   <h3>Assign to:</h3>
   <div>{{ form }}</div>
   <input type="submit" value="Submit" class="default" />
