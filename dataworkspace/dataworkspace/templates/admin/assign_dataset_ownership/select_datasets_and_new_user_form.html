@@ -1,9 +1,11 @@
 {% extends "admin/base_site.html" %} {% block content %}
 <h3>Current {{role}}:</h3>
 <p>{{user_id}}</p>
+
 <form method="POST">
   {% csrf_token %} {% for data in datasets %}
   <div>
+    {{data.type}}
     <input type="checkbox" value="{{data.id}}" name="dataset_id" />
     <label for="dataset_id">{{data.name}}: {{data.id}}</label>
   </div>

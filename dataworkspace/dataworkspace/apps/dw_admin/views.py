@@ -148,20 +148,29 @@ class SelectDatasetAndNewUserAdminView(FormView):
         context["role"] = role
         return context
 
-    def form_valid(self, form):
-        dataset_ids = form.data.getlist("dataset_id")
-        new_owner = form.data["user"]
-        role = self.kwargs.get("role")
-
+    def execute_sql(self, table, datasets, new_owner, role):
         with connection.cursor() as cursor:
             try:
                 cursor.execute(
                     SQL(
-                        "update app_dataset set {} = {} where id in {}",
-                    ).format(Identifier(role), Literal(new_owner), Literal(tuple(dataset_ids)))
+                        "update {} set {} = {} where id in {}",
+                    ).format(Identifier(table), Identifier(role), Literal(new_owner), Literal(tuple(datasets)))
                 )
             except Exception as e:
                 print("Error", e)
+
+    def form_valid(self, form):
+        dataset_ids = form.data.getlist("dataset_id")
+        datasets = [dataset for dataset in dataset_ids if '-' in dataset]
+        ref_datasets = [dataset for dataset in dataset_ids if '-' not in dataset]
+        new_owner = form.data["user"]
+        role = self.kwargs.get("role")
+
+        if datasets:
+            self.execute_sql('app_dataset', datasets, new_owner, role)
+            self.execute_sql('datasets_visualisationcatalogueitem', datasets, new_owner, role)
+        if ref_datasets:
+            self.execute_sql('app_referencedataset', ref_datasets, new_owner, role)
 
         return HttpResponseRedirect(reverse("dw-admin:assign-dataset-ownership-confirmation"))
 
