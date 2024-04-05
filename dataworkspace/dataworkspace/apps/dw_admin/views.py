@@ -1,6 +1,7 @@
 import csv
 import os
 from datetime import date, datetime, timedelta
+from pkgutil import get_data
 
 from botocore.exceptions import ClientError
 from celery import states
@@ -67,8 +68,11 @@ from dataworkspace.apps.your_files.models import YourFilesUserPrefixStats
 from dataworkspace.datasets_db import get_all_source_tables
 
 
-class FormOne(forms.Form):
+class SelectUserForm(forms.Form):
     user = forms.ModelChoiceField(queryset=User.objects.all())
+
+
+class CurrentOwnerAndRoleForm(SelectUserForm, forms.Form):
     role = forms.ChoiceField(
         choices=[
             ("information_asset_owner_id", "Information asset owner"),
@@ -81,90 +85,58 @@ class FormOne(forms.Form):
         return self.data["user"]
 
 
-class FormTwo(forms.Form):
-    user = forms.ModelChoiceField(queryset=User.objects.all())
-
-
-class GovernanceAssignSelectUserAdminView(FormView):
-    template_name = "admin/governance_admin_assign.html"
-    form_class = FormOne
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        return context
+class SelectUserAndRoleAdminView(FormView):
+    template_name = "admin/assign_dataset_ownership/select_current_user_and_role_form.html"
+    form_class = CurrentOwnerAndRoleForm
 
     def form_valid(self, form):
         user_id = form.get_user()
         role = form.data["role"]
         return HttpResponseRedirect(
             reverse(
-                "dw-admin:assign-ownership-two",
-                args=(user_id, role,),
+                "dw-admin:assign-dataset-ownership-list",
+                args=(
+                    user_id,
+                    role,
+                ),
             )
         )
 
 
-class GovernanceAssignSelectDatasetAdminView(FormView):
-    template_name = "admin/governance_admin_assign_2.html"
-    form_class = FormTwo
+class SelectDatasetAndNewUserAdminView(FormView):
+    template_name = "admin/assign_dataset_ownership/select_datasets_and_new_user_form.html"
+    form_class = SelectUserForm
+
+    def get_dataset_query(self, model, db_role, current_user):
+        return (
+            model.objects.all()
+            .annotate(
+                is_owner=BoolOr(
+                    Case(
+                        When(
+                            Q((db_role, current_user)),
+                            then=True,
+                        ),
+                        default=False,
+                        output_field=BooleanField(),
+                    ),
+                ),
+            )
+            .filter(is_owner=True)
+        )
 
     def get_datasets(self, user_id, role):
         current_user = User.objects.all().filter(id=user_id)
-        print("current_user", current_user[0])
         db_role = role[:-3]
-        datasets = (
-            DataSet.objects.all()
-            .annotate(
-                is_owner=BoolOr(
-                    Case(
-                        When(
-                            Q((db_role,current_user[0])),
-                            then=True,
-                        ),
-                        default=False,
-                        output_field=BooleanField(),
-                    ),
-                ),
-            )
-            .filter(is_owner=True)
-        )
-        ref_datasets = (
-            ReferenceDataset.objects.all()
-            .annotate(
-                is_owner=BoolOr(
-                    Case(
-                        When(
-                            Q((db_role,current_user[0])),
-                            then=True,
-                        ),
-                        default=False,
-                        output_field=BooleanField(),
-                    ),
-                ),
-            )
-            .filter(is_owner=True)
-        )
-        vis_datasets = (
-            VisualisationCatalogueItem.objects.all()
-            .annotate(
-                is_owner=BoolOr(
-                    Case(
-                        When(
-                            Q((db_role,current_user[0])),
-                            then=True,
-                        ),
-                        default=False,
-                        output_field=BooleanField(),
-                    ),
-                ),
-            )
-            .filter(is_owner=True)
-        )
+
+        datasets = self.get_dataset_query(DataSet, db_role, current_user[0])
+        ref_datasets = self.get_dataset_query(ReferenceDataset, db_role, current_user[0])
+        vis_datasets = self.get_dataset_query(VisualisationCatalogueItem, db_role, current_user[0])
+
         return list(datasets) + list(ref_datasets) + list(vis_datasets)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        print(self.request.GET)
         return kwargs
 
     def get_context_data(self, **kwargs):
@@ -181,10 +153,6 @@ class GovernanceAssignSelectDatasetAdminView(FormView):
         new_owner = form.data["user"]
         role = self.kwargs.get("role")
 
-        print('role', role)
-        print('new_owner', new_owner)
-        print('dataset_ids', tuple(dataset_ids))
-
         with connection.cursor() as cursor:
             try:
                 cursor.execute(
@@ -193,13 +161,13 @@ class GovernanceAssignSelectDatasetAdminView(FormView):
                     ).format(Identifier(role), Literal(new_owner), Literal(tuple(dataset_ids)))
                 )
             except Exception as e:
-                print("Error123", e)
+                print("Error", e)
 
-        return HttpResponseRedirect(reverse("dw-admin:assign-ownership-three"))
+        return HttpResponseRedirect(reverse("dw-admin:assign-dataset-ownership-confirmation"))
 
 
-class GovernanceAssignSuccessAdminView(TemplateView):
-    template_name = "admin/governance_admin_assign_3.html"
+class ConfirmationAdminView(TemplateView):
+    template_name = "admin/assign_dataset_ownership/confirmation.html"
 
 
 class ReferenceDataRecordMixin(UserPassesTestMixin):
