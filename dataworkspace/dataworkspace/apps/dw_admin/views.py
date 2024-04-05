@@ -2,7 +2,6 @@ import csv
 import os
 from datetime import date, datetime, timedelta
 
-from aiopg import connect
 from botocore.exceptions import ClientError
 from celery import states
 from dateutil.relativedelta import relativedelta
@@ -109,19 +108,17 @@ class GovernanceAssignSelectDatasetAdminView(FormView):
     template_name = "admin/governance_admin_assign_2.html"
     form_class = FormTwo
 
-    def get_datasets(self, user_id):
+    def get_datasets(self, user_id, role):
         current_user = User.objects.all().filter(id=user_id)
         print("current_user", current_user[0])
+        db_role = role[:-3]
         datasets = (
             DataSet.objects.all()
             .annotate(
                 is_owner=BoolOr(
                     Case(
                         When(
-                            Q(information_asset_owner=current_user[0])
-                            | Q(information_asset_manager=current_user[0])
-                            | Q(data_catalogue_editors=current_user[0])
-                            | Q(enquiries_contact=current_user[0]),
+                            Q((db_role,current_user[0])),
                             then=True,
                         ),
                         default=False,
@@ -137,9 +134,7 @@ class GovernanceAssignSelectDatasetAdminView(FormView):
                 is_owner=BoolOr(
                     Case(
                         When(
-                            Q(information_asset_owner=current_user[0])
-                            | Q(information_asset_manager=current_user[0])
-                            | Q(enquiries_contact=current_user[0]),
+                            Q((db_role,current_user[0])),
                             then=True,
                         ),
                         default=False,
@@ -155,9 +150,7 @@ class GovernanceAssignSelectDatasetAdminView(FormView):
                 is_owner=BoolOr(
                     Case(
                         When(
-                            Q(information_asset_owner=current_user[0])
-                            | Q(information_asset_manager=current_user[0])
-                            | Q(enquiries_contact=current_user[0]),
+                            Q((db_role,current_user[0])),
                             then=True,
                         ),
                         default=False,
@@ -177,9 +170,10 @@ class GovernanceAssignSelectDatasetAdminView(FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user_id = self.kwargs.get("id")
-        context["datasets"] = self.get_datasets(user_id)
+        role = self.kwargs.get("role")
+        context["datasets"] = self.get_datasets(user_id, role)
         context["user_id"] = User.objects.filter(id=user_id).first()
-        context["role"] = self.kwargs.get("role")
+        context["role"] = role
         return context
 
     def form_valid(self, form):
