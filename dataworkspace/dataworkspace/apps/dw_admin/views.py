@@ -139,13 +139,21 @@ class SelectDatasetAndNewUserAdminView(FormView):
         kwargs = super().get_form_kwargs()
         return kwargs
 
+    def get_role_title(self, role):
+        roles = {
+            "information_asset_manager_id": "Information asset manager",
+            "information_asset_owner_id": "Information asset owner",
+            "enquiries_contact_id": "Enquiries contact",
+        }
+        return roles[role]
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user_id = self.kwargs.get("id")
         role = self.kwargs.get("role")
         context["datasets"] = self.get_datasets(user_id, role)
         context["user_id"] = User.objects.filter(id=user_id).first()
-        context["role"] = role
+        context["role"] = self.get_role_title(role)
         return context
 
     def execute_sql(self, table, datasets, new_owner, role):
