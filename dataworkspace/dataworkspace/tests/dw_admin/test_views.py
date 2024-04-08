@@ -10,6 +10,7 @@ from dataworkspace.apps.dw_admin.views import (
 )
 from django.contrib.auth.models import User
 
+
 class BaseTest(TestCase):
     @classmethod
     def setUpTestData(obj):
@@ -17,6 +18,7 @@ class BaseTest(TestCase):
 
     def setUp(self):
         self.factory = RequestFactory()
+
 
 class SelectUserFormTest(BaseTest):
     def test_form(self):
