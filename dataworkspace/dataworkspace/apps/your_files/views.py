@@ -335,7 +335,7 @@ class CreateTableConfirmDataTypesView(ValidateSchemaMixin, FormView):
         logger.debug(filename)
 
         if "auto_generate_id_column" in cleaned and cleaned["auto_generate_id_column"] != "":
-            include_column_id = eval(cleaned["auto_generate_id_column"])
+            include_column_id = cleaned["auto_generate_id_column"] == 'True'
 
         conf = {
             "file_path": import_path,

@@ -114,7 +114,7 @@ class DatasetManageSourceTableColumnConfigView(DatasetManageSourceTableView):
         include_column_id = False
 
         if "auto_generate_id_column" in cleaned and cleaned["auto_generate_id_column"] != "":
-            include_column_id = eval(cleaned["auto_generate_id_column"])
+            include_column_id = cleaned["auto_generate_id_column"] == 'True'
 
         columns = get_s3_csv_column_types(cleaned["path"])
         for field in columns:
